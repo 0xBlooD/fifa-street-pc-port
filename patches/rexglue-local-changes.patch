@@ -172,6 +172,18 @@ index 4d845c7..6986efc 100644
    // The tiled buffer for resolved data with resolution scaling.
    // Because on Direct3D 12 (at least on Windows 10 2004) typed SRV or UAV
    // creation fails for offsets above 4 GB, a single tiled 4.5 GB buffer can't
+diff --git a/include/rex/graphics/flags.h b/include/rex/graphics/flags.h
+index 2cf24c4..24574c4 100644
+--- a/include/rex/graphics/flags.h
++++ b/include/rex/graphics/flags.h
+@@ -15,6 +15,7 @@
+ 
+ // GPU Core
+ REXCVAR_DECLARE(bool, vsync);
++REXCVAR_DECLARE(bool, true_vsync);
+ REXCVAR_DECLARE(bool, clear_memory_page_state);
+ REXCVAR_DECLARE(bool, half_pixel_offset);
+ REXCVAR_DECLARE(bool, async_shader_compilation);
 diff --git a/include/rex/graphics/pipeline/shader/dxbc_translator.h b/include/rex/graphics/pipeline/shader/dxbc_translator.h
 index 3b0fd61..be2c144 100644
 --- a/include/rex/graphics/pipeline/shader/dxbc_translator.h
@@ -322,6 +334,84 @@ index b3947e0..21202c7 100644
    kCount  // sentinel -- must be last
  };
  
+diff --git a/include/rex/ppc/gprlr_inline.h b/include/rex/ppc/gprlr_inline.h
+new file mode 100644
+index 0000000..4506ec2
+--- /dev/null
++++ b/include/rex/ppc/gprlr_inline.h
+@@ -0,0 +1,72 @@
++/**
++ * @file        gprlr_inline.h
++ * @brief       Inline copies of the compiler's GPR/LR save and restore helpers
++ *
++ * The Xbox 360 compiler calls __savegprlr_N / __restgprlr_N (N = 14..31) from almost every
++ * non-leaf function. Recompiled as ordinary functions they are out-of-line weak calls carrying a
++ * PPCContext reference. Codegen emits calls to these always_inline copies instead; the bodies are
++ * the exact ones the helpers are recompiled to (r1 - 8 * (32 - i) - 8 for each register i, then the
++ * link register word at r1 - 8).
++ *
++ * Requires REX_LOAD_U32/U64, REX_STORE_U32/U64 and PPCContext from the module's pch.
++ */
++#pragma once
++
++#define REX_INL_SV(i) REX_STORE_U64(ctx.r1.u32 + (-8 * (32 - i) - 8), ctx.r##i.u64);
++#define REX_INL_RS(i) ctx.r##i.u64 = REX_LOAD_U64(ctx.r1.u32 + (-8 * (32 - i) - 8));
++
++#define REX_INL_SAVE_31 REX_INL_SV(31)
++#define REX_INL_SAVE_30 REX_INL_SV(30) REX_INL_SAVE_31
++#define REX_INL_SAVE_29 REX_INL_SV(29) REX_INL_SAVE_30
++#define REX_INL_SAVE_28 REX_INL_SV(28) REX_INL_SAVE_29
++#define REX_INL_SAVE_27 REX_INL_SV(27) REX_INL_SAVE_28
++#define REX_INL_SAVE_26 REX_INL_SV(26) REX_INL_SAVE_27
++#define REX_INL_SAVE_25 REX_INL_SV(25) REX_INL_SAVE_26
++#define REX_INL_SAVE_24 REX_INL_SV(24) REX_INL_SAVE_25
++#define REX_INL_SAVE_23 REX_INL_SV(23) REX_INL_SAVE_24
++#define REX_INL_SAVE_22 REX_INL_SV(22) REX_INL_SAVE_23
++#define REX_INL_SAVE_21 REX_INL_SV(21) REX_INL_SAVE_22
++#define REX_INL_SAVE_20 REX_INL_SV(20) REX_INL_SAVE_21
++#define REX_INL_SAVE_19 REX_INL_SV(19) REX_INL_SAVE_20
++#define REX_INL_SAVE_18 REX_INL_SV(18) REX_INL_SAVE_19
++#define REX_INL_SAVE_17 REX_INL_SV(17) REX_INL_SAVE_18
++#define REX_INL_SAVE_16 REX_INL_SV(16) REX_INL_SAVE_17
++#define REX_INL_SAVE_15 REX_INL_SV(15) REX_INL_SAVE_16
++#define REX_INL_SAVE_14 REX_INL_SV(14) REX_INL_SAVE_15
++
++#define REX_INL_REST_31 REX_INL_RS(31)
++#define REX_INL_REST_30 REX_INL_RS(30) REX_INL_REST_31
++#define REX_INL_REST_29 REX_INL_RS(29) REX_INL_REST_30
++#define REX_INL_REST_28 REX_INL_RS(28) REX_INL_REST_29
++#define REX_INL_REST_27 REX_INL_RS(27) REX_INL_REST_28
++#define REX_INL_REST_26 REX_INL_RS(26) REX_INL_REST_27
++#define REX_INL_REST_25 REX_INL_RS(25) REX_INL_REST_26
++#define REX_INL_REST_24 REX_INL_RS(24) REX_INL_REST_25
++#define REX_INL_REST_23 REX_INL_RS(23) REX_INL_REST_24
++#define REX_INL_REST_22 REX_INL_RS(22) REX_INL_REST_23
++#define REX_INL_REST_21 REX_INL_RS(21) REX_INL_REST_22
++#define REX_INL_REST_20 REX_INL_RS(20) REX_INL_REST_21
++#define REX_INL_REST_19 REX_INL_RS(19) REX_INL_REST_20
++#define REX_INL_REST_18 REX_INL_RS(18) REX_INL_REST_19
++#define REX_INL_REST_17 REX_INL_RS(17) REX_INL_REST_18
++#define REX_INL_REST_16 REX_INL_RS(16) REX_INL_REST_17
++#define REX_INL_REST_15 REX_INL_RS(15) REX_INL_REST_16
++#define REX_INL_REST_14 REX_INL_RS(14) REX_INL_REST_15
++
++#define REX_INL_GPRLR(N)                                                                      \
++  static inline __attribute__((always_inline)) void rex_inl_savegprlr_##N(                   \
++      PPCContext& __restrict ctx, uint8_t* base) {                                           \
++    REX_INL_SAVE_##N                                                                         \
++    REX_STORE_U32(ctx.r1.u32 + -8, ctx.r12.u32);                                             \
++  }                                                                                          \
++  static inline __attribute__((always_inline)) void rex_inl_restgprlr_##N(                   \
++      PPCContext& __restrict ctx, uint8_t* base) {                                           \
++    REX_INL_REST_##N                                                                         \
++    ctx.r12.u64 = REX_LOAD_U32(ctx.r1.u32 + -8);                                             \
++    ctx.lr = ctx.r12.u64;                                                                    \
++  }
++
++REX_INL_GPRLR(14) REX_INL_GPRLR(15) REX_INL_GPRLR(16) REX_INL_GPRLR(17) REX_INL_GPRLR(18)
++REX_INL_GPRLR(19) REX_INL_GPRLR(20) REX_INL_GPRLR(21) REX_INL_GPRLR(22) REX_INL_GPRLR(23)
++REX_INL_GPRLR(24) REX_INL_GPRLR(25) REX_INL_GPRLR(26) REX_INL_GPRLR(27) REX_INL_GPRLR(28)
++REX_INL_GPRLR(29) REX_INL_GPRLR(30) REX_INL_GPRLR(31)
 diff --git a/include/rex/rex_app.h b/include/rex/rex_app.h
 index 1f52480..4b169cb 100644
 --- a/include/rex/rex_app.h
@@ -574,47 +664,63 @@ index 505b599..3eda4cb 100644
      return AwaitSubmissionCompletion(submission_current_ - 1);
    }
 diff --git a/resources/templates/codegen/_indirect_call.inja b/resources/templates/codegen/_indirect_call.inja
-index d4b1830..127e573 100644
+index d4b1830..3a33579 100644
 --- a/resources/templates/codegen/_indirect_call.inja
 +++ b/resources/templates/codegen/_indirect_call.inja
-@@ -1,12 +1,7 @@
+@@ -1,12 +1,14 @@
  //=============================================================================
  // Indirect Call Dispatch
--//
++// Resolve through the runtime: function tables are independent of XEX images.
++// The dispatcher handles calls across all loaded modules.
+ //
 -// REX_LOOKUP_FUNC indexes into the per-module dispatch table at
 -// IMAGE_BASE + IMAGE_SIZE. REX_CALL_INDIRECT_FUNC bounds-checks the target
 -// against the caller's [REX_CODE_BASE, REX_CODE_BASE + REX_CODE_SIZE +
 -// REX_THUNK_RESERVE_SIZE) range; out-of-bounds targets and in-bounds
 -// unregistered slots fall back to rex::runtime::ResolveIndirectFunction,
 -// which queries the global FunctionDispatcher across every loaded module.
-+// Resolve through the runtime: function tables are independent of XEX images.
-+// The dispatcher handles calls across all loaded modules.
++// Fast path: Memory::InitializeFunctionTable places the table of the module
++// loaded at code base 0x82610000 (FIFA Street's fifadllzf.xex.dll) right after
++// its image (FIFA_TABLE_FIX), where the SDK's original per-module lookup
++// expects it. Every other module has a dynamically allocated table, so it
++// keeps the dispatcher call. Out-of-range targets and empty slots also fall
++// back to the dispatcher, which is what the slow path always did.
  //=============================================================================
  
  #ifdef REXGLUE_ENABLE_PROFILING
-@@ -17,22 +12,14 @@
+@@ -17,22 +19,34 @@
  #endif
  
  #define REX_LOOKUP_FUNC(x, y) \
 -  (*(PPCFunc**)(x + REX_IMAGE_BASE + REX_IMAGE_SIZE + (u64(u32(y) - REX_CODE_BASE) * 2)))
 +  rex::runtime::ResolveIndirectFunction(static_cast<uint32_t>(y))
  
--#define REX_CALL_INDIRECT_FUNC(x)                                                          \
--  do {                                                                                     \
--    REX_PROFILE_INDIRECT_DISPATCH();                                                       \
++#if REX_CODE_BASE == 0x82610000ull
+ #define REX_CALL_INDIRECT_FUNC(x)                                                          \
+   do {                                                                                     \
+     REX_PROFILE_INDIRECT_DISPATCH();                                                       \
 -    uint32_t rex_indirect_target_ = (uint32_t)(x);                                         \
 -    PPCFunc* rex_indirect_func_;                                                           \
--    if ((uint32_t)(rex_indirect_target_ - REX_CODE_BASE) <                                 \
--        REX_CODE_SIZE + REX_THUNK_RESERVE_SIZE) [[likely]] {                               \
++    uint32_t rex_indirect_target_ = static_cast<uint32_t>(x);                              \
++    ctx.last_indirect_target = rex_indirect_target_;                                       \
++    PPCFunc* rex_indirect_func_ = nullptr;                                                 \
+     if ((uint32_t)(rex_indirect_target_ - REX_CODE_BASE) <                                 \
+         REX_CODE_SIZE + REX_THUNK_RESERVE_SIZE) [[likely]] {                               \
 -      rex_indirect_func_ = REX_LOOKUP_FUNC(base, rex_indirect_target_);                    \
 -    } else {                                                                               \
 -      rex_indirect_func_ = nullptr;                                                        \
--    }                                                                                      \
--    if (!rex_indirect_func_) [[unlikely]] {                                                \
++      rex_indirect_func_ =                                                                 \
++          *(PPCFunc**)(base + REX_IMAGE_BASE + REX_IMAGE_SIZE +                            \
++                       (u64(rex_indirect_target_ - REX_CODE_BASE) * 2));                   \
+     }                                                                                      \
+     if (!rex_indirect_func_) [[unlikely]] {                                                \
 -      ctx.last_indirect_target = rex_indirect_target_;                                     \
 -      rex_indirect_func_ = rex::runtime::ResolveIndirectFunction(rex_indirect_target_);    \
--    }                                                                                      \
--    rex_indirect_func_(ctx, base);                                                         \
++      rex_indirect_func_ = REX_LOOKUP_FUNC(base, rex_indirect_target_);                    \
+     }                                                                                      \
+     rex_indirect_func_(ctx, base);                                                         \
+   } while (0)
++#else
 +#define REX_CALL_INDIRECT_FUNC(x)                                      \
 +  do {                                                                \
 +    REX_PROFILE_INDIRECT_DISPATCH();                                   \
@@ -623,12 +729,67 @@ index d4b1830..127e573 100644
 +    PPCFunc* rex_indirect_func_ =                                      \
 +        REX_LOOKUP_FUNC(base, rex_indirect_target_);                    \
 +    rex_indirect_func_(ctx, base);                                     \
-   } while (0)
++  } while (0)
++#endif
+diff --git a/resources/templates/codegen/pch_h.inja b/resources/templates/codegen/pch_h.inja
+index 68274d2..5706b1e 100644
+--- a/resources/templates/codegen/pch_h.inja
++++ b/resources/templates/codegen/pch_h.inja
+@@ -246,6 +246,8 @@ extern PPCFuncMapping PPCFuncMappings[];
+ 
+ {% include "codegen/_indirect_call.inja" %}
+ 
++#include <rex/ppc/gprlr_inline.h>
++
+ //=============================================================================
+ // Flush Mode
+ //=============================================================================
 diff --git a/src/codegen/builders/context.cpp b/src/codegen/builders/context.cpp
-index f78e0d8..1d303db 100644
+index f78e0d8..fff103a 100644
 --- a/src/codegen/builders/context.cpp
 +++ b/src/codegen/builders/context.cpp
-@@ -281,7 +281,9 @@ void BuilderContext::emit_conditional_branch(bool not_, std::string_view cond) {
+@@ -13,6 +13,7 @@
+ #include "helpers.h"
+ 
+ #include <algorithm>
++#include <string_view>
+ 
+ #include <rex/codegen/binary_view.h>
+ #include <rex/logging.h>
+@@ -226,6 +227,32 @@ void BuilderContext::emit_function_call(uint32_t address) {
+         return;
+       }
+ 
++      // GPR/LR save and restore helpers: emit the always_inline copy from
++      // rex/ppc/gprlr_inline.h (identical body) instead of an out-of-line call.
++      {
++        constexpr std::string_view kSave = "__savegprlr_";
++        constexpr std::string_view kRest = "__restgprlr_";
++        std::string_view view = name;
++        const bool is_save = view.substr(0, kSave.size()) == kSave;
++        const bool is_rest = view.substr(0, kRest.size()) == kRest;
++        if (is_save || is_rest) {
++          const std::string_view digits = view.substr(kSave.size());
++          unsigned n = 0;
++          bool numeric = !digits.empty() && digits.size() <= 2;
++          for (char c : digits) {
++            if (c < '0' || c > '9') {
++              numeric = false;
++              break;
++            }
++            n = n * 10 + unsigned(c - '0');
++          }
++          if (numeric && n >= 14 && n <= 31) {
++            println("\trex_inl_{}gprlr_{}(ctx, base);", is_save ? "save" : "rest", n);
++            return;
++          }
++        }
++      }
++
+       emitCtx.reference(name);
+       println("\t{}(ctx, base);", name);
+       return;
+@@ -281,7 +308,9 @@ void BuilderContext::emit_conditional_branch(bool not_, std::string_view cond) {
  
    // Use classifyTarget for consistent branch classification
    // false = branch instruction (not a call), so own-base means loop back
@@ -1282,6 +1443,154 @@ index 3dd190e..b45ba3e 100644
    str.resize(len);
    Read(std::span<uint8_t>(reinterpret_cast<uint8_t*>(str.data()), len * sizeof(char16_t)));
    return str;
+diff --git a/src/core/clock.cpp b/src/core/clock.cpp
+index ae72b7a..7181765 100644
+--- a/src/core/clock.cpp
++++ b/src/core/clock.cpp
+@@ -10,6 +10,13 @@
+  */
+ 
+ #include <algorithm>
++#include <atomic>
++#if defined(_WIN32)
++#include <windows.h>
++#endif
++#if defined(__x86_64__) || defined(_M_X64)
++#include <immintrin.h>
++#endif
+ #include <limits>
+ #include <mutex>
+ 
+@@ -35,13 +42,24 @@ uint64_t guest_system_time_base_ = Clock::QueryHostSystemTime();
+ // Computed by RecomputeGuestTickScalar.
+ std::pair<uint64_t, uint64_t> guest_tick_ratio_ = std::make_pair(1, 1);
+ 
+-// Native guest ticks.
+-uint64_t last_guest_tick_count_ = 0;
+-// Last sampled host tick count.
+-uint64_t last_host_tick_count_ = Clock::QueryHostTickCount();
+-// Mutex to ensure last_host_tick_count_ and last_guest_tick_count_ are in sync
++// Guest tick count = guest_base + (host - host_base) * ratio. Readers (every mftb the game executes,
++// including its busy-wait loops) take no lock: the base is only rebased, under tick_mutex_ and a
++// sequence counter, when the ratio changes.
++std::atomic<uint32_t> clock_seq_{0};
++std::atomic<uint64_t> clock_host_base_{Clock::QueryHostTickCount()};
++std::atomic<uint64_t> clock_guest_base_{0};
++std::atomic<uint64_t> clock_ratio_num_{1};
++std::atomic<uint64_t> clock_ratio_den_{1};
++// Serialises writers (ratio changes) and guest_tick_ratio().
+ std::mutex tick_mutex_;
+ 
++static uint64_t GuestTicksFromHost(uint64_t host_tick_count, uint64_t host_base, uint64_t guest_base,
++                                   uint64_t num, uint64_t den) {
++  const uint64_t delta = host_tick_count > host_base ? host_tick_count - host_base : 0;
++  // delta * num / den without a 128-bit division: whole multiples of den first, then the remainder.
++  return guest_base + (delta / den) * num + (delta % den) * num / den;
++}
++
+ void RecomputeGuestTickScalar() {
+   // Create a rational number with numerator (first) and denominator (second)
+   auto frac = std::make_pair(guest_tick_frequency_, Clock::QueryHostTickFrequency());
+@@ -58,37 +76,48 @@ void RecomputeGuestTickScalar() {
+   reduce_fraction(frac);
+ 
+   std::lock_guard<std::mutex> lock(tick_mutex_);
++  const uint64_t host_now = Clock::QueryHostTickCount();
++  const uint64_t guest_now =
++      GuestTicksFromHost(host_now, clock_host_base_.load(std::memory_order_relaxed),
++                         clock_guest_base_.load(std::memory_order_relaxed),
++                         clock_ratio_num_.load(std::memory_order_relaxed),
++                         clock_ratio_den_.load(std::memory_order_relaxed));
++  clock_seq_.fetch_add(1, std::memory_order_acq_rel);  // odd: update in progress
++  clock_host_base_.store(host_now, std::memory_order_relaxed);
++  clock_guest_base_.store(guest_now, std::memory_order_relaxed);
++  clock_ratio_num_.store(frac.first, std::memory_order_relaxed);
++  clock_ratio_den_.store(frac.second, std::memory_order_relaxed);
++  clock_seq_.fetch_add(1, std::memory_order_release);  // even: consistent
+   guest_tick_ratio_ = frac;
+ }
+ 
+-// Update the guest timer for all threads.
+-// Return a copy of the value so locking is reduced.
+-uint64_t UpdateGuestClock() {
+-  uint64_t host_tick_count = Clock::QueryHostTickCount();
++// Current guest tick count for all threads (lock-free).
++uint64_t UpdateGuestClockAt(uint64_t host_tick_count) {
+ 
+   if (REXCVAR_GET(clock_no_scaling)) {
+     // Nothing to update, calculate on the fly
+     return host_tick_count * guest_tick_ratio_.first / guest_tick_ratio_.second;
+   }
+ 
+-  std::unique_lock<std::mutex> lock(tick_mutex_, std::defer_lock);
+-  if (lock.try_lock()) {
+-    // Translate host tick count to guest tick count.
+-    uint64_t host_tick_delta =
+-        host_tick_count > last_host_tick_count_ ? host_tick_count - last_host_tick_count_ : 0;
+-    last_host_tick_count_ = host_tick_count;
+-    uint64_t guest_tick_delta =
+-        host_tick_delta * guest_tick_ratio_.first / guest_tick_ratio_.second;
+-    last_guest_tick_count_ += guest_tick_delta;
+-    return last_guest_tick_count_;
+-  } else {
+-    // Wait until another thread has finished updating the clock.
+-    lock.lock();
+-    return last_guest_tick_count_;
++  for (;;) {
++    const uint32_t seq = clock_seq_.load(std::memory_order_acquire);
++    if (seq & 1) {
++      continue;  // A ratio change is being published; it lasts a few instructions.
++    }
++    const uint64_t host_base = clock_host_base_.load(std::memory_order_relaxed);
++    const uint64_t guest_base = clock_guest_base_.load(std::memory_order_relaxed);
++    const uint64_t num = clock_ratio_num_.load(std::memory_order_relaxed);
++    const uint64_t den = clock_ratio_den_.load(std::memory_order_relaxed);
++    std::atomic_thread_fence(std::memory_order_acquire);
++    if (clock_seq_.load(std::memory_order_relaxed) == seq) {
++      return GuestTicksFromHost(host_tick_count, host_base, guest_base, num, den);
++    }
+   }
+ }
++uint64_t UpdateGuestClock() {
++  return UpdateGuestClockAt(Clock::QueryHostTickCount());
++}
+ 
+-// Offset of the current guest system file time relative to the guest base time.
+ inline uint64_t QueryGuestSystemTimeOffset() {
+   if (REXCVAR_GET(clock_no_scaling)) {
+     return Clock::QueryHostSystemTime() - guest_system_time_base_;
+@@ -156,7 +185,30 @@ void Clock::set_guest_system_time_base(uint64_t time_base) {
+ }
+ 
+ uint64_t Clock::QueryGuestTickCount() {
+-  auto guest_tick_count = UpdateGuestClock();
++  // The game polls the timebase (mftb) in tight busy-wait loops, for example its Direct3D fence and
++  // vblank waits, which on a 360 owned a dedicated hardware thread. On a shared host that loop burns
++  // a core and its SMT sibling. Calls that follow each other within ~2 us on a thread are such a loop:
++  // pause between them and, in a long run, give the core to another ready thread. The time that is
++  // returned is unaffected.
++  thread_local uint64_t previous_host_tick = 0;
++  thread_local uint32_t rapid_calls = 0;
++  const uint64_t host_tick = Clock::QueryHostTickCount();
++  static const uint64_t spacing_ticks = std::max<uint64_t>(1, Clock::QueryHostTickFrequency() / 500000);
++  if (previous_host_tick && host_tick - previous_host_tick < spacing_ticks) {
++    ++rapid_calls;
++#if defined(__x86_64__) || defined(_M_X64)
++    _mm_pause();
++#endif
++#if defined(_WIN32)
++    if ((rapid_calls & 0xFF) == 0) {
++      ::SwitchToThread();
++    }
++#endif
++  } else {
++    rapid_calls = 0;
++  }
++  previous_host_tick = host_tick;
++  auto guest_tick_count = UpdateGuestClockAt(host_tick);
+   return guest_tick_count;
+ }
+ 
 diff --git a/src/core/perf/counter.cpp b/src/core/perf/counter.cpp
 index 536009e..97f15f4 100644
 --- a/src/core/perf/counter.cpp
@@ -1415,22 +1724,26 @@ index 4c57a18..c0d97c9 100644
    } else {
      return X_STATUS_END_OF_FILE;
 diff --git a/src/graphics/command_processor.cpp b/src/graphics/command_processor.cpp
-index a744375..7970596 100644
+index a744375..87bfab1 100644
 --- a/src/graphics/command_processor.cpp
 +++ b/src/graphics/command_processor.cpp
-@@ -37,6 +37,11 @@
+@@ -36,6 +36,15 @@
+ #include <rex/system/user_module.h>
  
  REXCVAR_DEFINE_BOOL(vsync, true, "GPU", "Enable vertical sync");
- 
++REXCVAR_DEFINE_BOOL(true_vsync, false, "GPU",
++                    "True VSync: the guest runs unlocked from the display (guest vblank at 1 kHz, frame cap = "
++                    "refresh rate) and the presenter shows the newest frame at every refresh with real VSync, "
++                    "so the frame rate follows the chosen Hz without tearing.");
++
 +REXCVAR_DEFINE_BOOL(log_frame_stats, false, "GPU",
 +                    "Log guest swap cadence every five seconds: average FPS, worst interval, "
 +                    "and intervals longer than 17 ms. Includes loading and pauses.")
 +    .lifecycle(rex::cvar::Lifecycle::kHotReload);
-+
+ 
  REXCVAR_DEFINE_BOOL(clear_memory_page_state, true, "GPU",
                      "Refresh page-valid state from GPU-written memory at frame end. "
-                     "Disable for minor CPU overhead reduction, but may break memory coherency.")
-@@ -54,6 +59,61 @@ REXCVAR_DEFINE_STRING(readback_resolve, "none", "GPU",
+@@ -54,6 +63,61 @@ REXCVAR_DEFINE_STRING(readback_resolve, "none", "GPU",
      .allowed({"none", "fast", "some", "full"})
      .lifecycle(rex::cvar::Lifecycle::kHotReload);
  
@@ -1492,7 +1805,7 @@ index a744375..7970596 100644
  REXCVAR_DEFINE_BOOL(readback_resolve_half_pixel_offset, false, "GPU",
                      "When draw resolution scaling is active, sample from the center of each "
                      "scaled block during resolve readback downscale")
-@@ -181,6 +241,144 @@ ReadbackResolveMode CommandProcessor::GetReadbackResolveMode(
+@@ -181,6 +245,144 @@ ReadbackResolveMode CommandProcessor::GetReadbackResolveMode(
                                           : ReadbackResolveMode::kDisabled;
  }
  
@@ -1637,7 +1950,7 @@ index a744375..7970596 100644
  bool CommandProcessor::IsReadbackMemexportEnabled(bool legacy_backend_flag) const {
    if (legacy_readback_memexport_cvar_name_ &&
        rex::cvar::HasNonDefaultValue(legacy_readback_memexport_cvar_name_)) {
-@@ -930,6 +1128,33 @@ bool CommandProcessor::ExecutePacketType3_XE_SWAP(memory::RingBuffer* reader, ui
+@@ -930,6 +1132,33 @@ bool CommandProcessor::ExecutePacketType3_XE_SWAP(memory::RingBuffer* reader, ui
                                                    uint32_t count) {
    SCOPE_profile_cpu_f("gpu");
  
@@ -1671,7 +1984,7 @@ index a744375..7970596 100644
  #ifdef REXGLUE_ENABLE_PERF_COUNTERS
    {
      static uint64_t last_frame_tick = 0;
-@@ -943,6 +1168,7 @@ bool CommandProcessor::ExecutePacketType3_XE_SWAP(memory::RingBuffer* reader, ui
+@@ -943,6 +1172,7 @@ bool CommandProcessor::ExecutePacketType3_XE_SWAP(memory::RingBuffer* reader, ui
      last_frame_tick = now;
    }
  #endif
@@ -2535,7 +2848,7 @@ index 2be0e8e..05b54f5 100644
    // Create a new bindless or cached descriptor if supported.
    D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
 diff --git a/src/graphics/graphics_system.cpp b/src/graphics/graphics_system.cpp
-index 8f2fcb0..3c584e9 100644
+index 8f2fcb0..7e9edf8 100644
 --- a/src/graphics/graphics_system.cpp
 +++ b/src/graphics/graphics_system.cpp
 @@ -1,3 +1,4 @@
@@ -2543,43 +2856,209 @@ index 8f2fcb0..3c584e9 100644
  /**
   ******************************************************************************
   * Xenia : Xbox 360 Emulator Research Project                                 *
-@@ -14,12 +15,14 @@
+@@ -14,12 +15,20 @@
  #include <algorithm>
  #include <cctype>
  #include <cstdint>
 +#include <filesystem>
  #include <functional>
  #include <memory>
++#include <chrono>
  #include <mutex>
++#include <string>
++#include <thread>
++#include <tuple>
++#include <unordered_map>
  #include <utility>
++#include <vector>
  
  #include <rex/cvar.h>
 +#include <rex/filesystem.h>
  #include <rex/graphics/command_processor.h>
  #include <rex/graphics/flags.h>
  #include <rex/kernel/xboxkrnl/video.h>
-@@ -31,6 +34,10 @@
+@@ -31,6 +40,11 @@
  #include <rex/ui/window.h>
  #include <rex/ui/windowed_app_context.h>
  
 +#if REX_PLATFORM_WIN32
 +#include "../core/platform_win.h"
++#include <tlhelp32.h>
 +#endif
 +
  REXCVAR_DEFINE_STRING(swap_post_effect, "none", "GPU", "Swap post effect: none, fxaa, fxaa_extreme")
      .allowed({"none", "fxaa", "fxaa_extreme"})
      .lifecycle(rex::cvar::Lifecycle::kRequiresRestart);
-@@ -39,6 +46,9 @@ REXCVAR_DEFINE_BOOL(store_shaders, true, "GPU",
+@@ -39,6 +53,17 @@ REXCVAR_DEFINE_BOOL(store_shaders, true, "GPU",
                      "Store shaders persistently and load them when loading games to avoid "
                      "runtime spikes and freezes when playing the game not for the first time.");
  
 +REXCVAR_DEFINE_BOOL(guest_vblank_unlocked, true, "GPU",
 +                    "Allow 1000 Hz guest vblank when host VSync is disabled; disable to preserve video-mode timing");
 +
++REXCVAR_DEFINE_BOOL(log_thread_cpu, false, "GPU",
++                    "Every two seconds log the process threads that use at least 5% of a core, with their "
++                    "[t#####] id and name, to see which thread limits the frame rate.");
++
++REXCVAR_DEFINE_BOOL(log_thread_samples, false, "GPU",
++                    "With log_thread_cpu: sample the instruction pointer of saturated threads and log "
++                    "the hottest module+RVA entries (diagnostic).");
++
  namespace {
  
  rex::graphics::CommandProcessor::SwapPostEffect ParseSwapPostEffect(
-@@ -157,15 +167,75 @@ X_STATUS GraphicsSystem::SetupGuestGpu(runtime::FunctionDispatcher* function_dis
+@@ -115,6 +140,140 @@ X_STATUS GraphicsSystem::SetupPresentation(ui::WindowedAppContext* app_context)
+   return X_STATUS_SUCCESS;
+ }
+ 
++#if REX_PLATFORM_WIN32
++// Diagnostics: per-thread CPU use of this process, logged every two seconds.
++void StartThreadCpuLogger() {
++  static std::once_flag once;
++  std::call_once(once, [] {
++    std::thread([] {
++      using GetThreadDescriptionFn = HRESULT(WINAPI*)(HANDLE, PWSTR*);
++      auto get_description = reinterpret_cast<GetThreadDescriptionFn>(
++          ::GetProcAddress(::GetModuleHandleW(L"kernel32.dll"), "GetThreadDescription"));
++      std::unordered_map<DWORD, uint64_t> previous;
++      auto last = std::chrono::steady_clock::now();
++      const DWORD pid = ::GetCurrentProcessId();
++      for (;;) {
++        std::this_thread::sleep_for(std::chrono::seconds(2));
++        const auto now = std::chrono::steady_clock::now();
++        const double wall = std::chrono::duration<double>(now - last).count();
++        last = now;
++        HANDLE snapshot = ::CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
++        if (snapshot == INVALID_HANDLE_VALUE) continue;
++        std::vector<std::tuple<double, DWORD, std::string>> rows;
++        THREADENTRY32 entry{};
++        entry.dwSize = sizeof(entry);
++        for (BOOL ok = ::Thread32First(snapshot, &entry); ok; ok = ::Thread32Next(snapshot, &entry)) {
++          if (entry.th32OwnerProcessID != pid) continue;
++          HANDLE thread = ::OpenThread(THREAD_QUERY_LIMITED_INFORMATION, FALSE, entry.th32ThreadID);
++          if (!thread) continue;
++          FILETIME creation, exit_time, kernel, user;
++          if (::GetThreadTimes(thread, &creation, &exit_time, &kernel, &user)) {
++            auto to_u64 = [](const FILETIME& f) { return (uint64_t(f.dwHighDateTime) << 32) | f.dwLowDateTime; };
++            const uint64_t total = to_u64(kernel) + to_u64(user);  // 100 ns units
++            uint64_t& before = previous[entry.th32ThreadID];
++            const double percent = (before && wall > 0) ? double(total - before) / 1e7 / wall * 100.0 : 0.0;
++            before = total;
++            if (percent >= 5.0) {
++              std::string name;
++              PWSTR description = nullptr;
++              if (get_description && SUCCEEDED(get_description(thread, &description)) && description) {
++                for (const wchar_t* c = description; *c; ++c) name += *c < 128 ? char(*c) : '?';
++                ::LocalFree(description);
++              }
++              rows.emplace_back(percent, entry.th32ThreadID, name);
++            }
++          }
++          ::CloseHandle(thread);
++        }
++        ::CloseHandle(snapshot);
++        std::sort(rows.begin(), rows.end(), [](const auto& a, const auto& b) { return std::get<0>(a) > std::get<0>(b); });
++        std::string line;
++        for (size_t i = 0; i < rows.size() && i < 8; ++i) {
++          line += " | t" + std::to_string(std::get<1>(rows[i])) + " '" + std::get<2>(rows[i]) + "' " +
++                  std::to_string(int(std::get<0>(rows[i]) + 0.5)) + "%";
++        }
++        REXGPU_INFO("ThreadCPU (2 s):{}", line.empty() ? " none above 5%" : line);
++        if (REXCVAR_GET(log_thread_samples)) {
++          // Instruction-pointer sampling of the threads that are saturated: 800 suspend/read/resume
++          // samples each, aggregated as module+RVA so the hot recompiled function can be named from
++          // the module's PDB (llvm-symbolizer). Diagnostic only.
++          for (size_t r = 0; r < rows.size() && r < 5; ++r) {
++            if (std::get<0>(rows[r]) < 30.0) continue;
++            HANDLE thread = ::OpenThread(THREAD_SUSPEND_RESUME | THREAD_GET_CONTEXT |
++                                             THREAD_QUERY_LIMITED_INFORMATION,
++                                         FALSE, std::get<1>(rows[r]));
++            if (!thread) continue;
++            auto describe = [](uint64_t address) {
++              HMODULE module = nullptr;
++              if (!::GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
++                                            GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
++                                        reinterpret_cast<LPCWSTR>(address), &module) || !module) {
++                return std::string("unknown");
++              }
++              wchar_t path[MAX_PATH] = {};
++              ::GetModuleFileNameW(module, path, MAX_PATH);
++              std::wstring wpath(path);
++              const size_t slash = wpath.find_last_of(L"\\/");
++              std::string file;
++              for (wchar_t c : wpath.substr(slash == std::wstring::npos ? 0 : slash + 1)) {
++                file += c < 128 ? char(c) : (char)63;
++              }
++              char rva[32];
++              snprintf(rva, sizeof(rva), "+0x%llX",
++                       (unsigned long long)(address - reinterpret_cast<uint64_t>(module)));
++              return file + rva;
++            };
++            std::unordered_map<std::string, uint32_t> by_symbol;
++            for (int s = 0; s < 800; ++s) {
++              if (::SuspendThread(thread) == DWORD(-1)) break;
++              CONTEXT context{};
++              context.ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER;
++              if (::GetThreadContext(thread, &context)) {
++                std::string leaf = describe(context.Rip), runtime_frame, game_frame;
++                CONTEXT walk = context;
++                int game_frames = 0;
++                for (int depth = 0; depth < 40 && game_frames < 4; ++depth) {
++                  DWORD64 image_base = 0;
++                  UNWIND_HISTORY_TABLE history{};
++                  PRUNTIME_FUNCTION entry = ::RtlLookupFunctionEntry(walk.Rip, &image_base, &history);
++                  const std::string here = describe(entry ? image_base + entry->BeginAddress : walk.Rip);
++                  if (depth > 0) {
++                    if (here.rfind("fifastreet_", 0) == 0) { game_frame += (game_frame.empty() ? "" : " <- ") + describe(walk.Rip); ++game_frames; }
++                    else if (runtime_frame.empty() && (here.rfind("rexruntime", 0) == 0 || here.rfind("rexgpu", 0) == 0)) runtime_frame = here;
++                  }
++                  if (!entry) {
++                    if (!walk.Rsp) break;
++                    walk.Rip = *reinterpret_cast<uint64_t*>(walk.Rsp);
++                    walk.Rsp += 8;
++                  } else {
++                    void* handler_data = nullptr;
++                    DWORD64 establisher = 0;
++                    ::RtlVirtualUnwind(UNW_FLAG_NHANDLER, image_base, walk.Rip, entry, &walk, &handler_data, &establisher, nullptr);
++                  }
++                  if (!walk.Rip) break;
++                }
++                by_symbol[leaf + (runtime_frame.empty() ? "" : " via " + runtime_frame) + (game_frame.empty() ? "" : " <- " + game_frame)]++;
++              }
++              ::ResumeThread(thread);
++              std::this_thread::sleep_for(std::chrono::microseconds(300));
++            }
++            ::CloseHandle(thread);
++            std::vector<std::pair<uint32_t, std::string>> ranked;
++            for (const auto& [key, count] : by_symbol) ranked.emplace_back(count, key);
++            std::sort(ranked.rbegin(), ranked.rend());
++            std::string text;
++            for (size_t i = 0; i < ranked.size() && i < 14; ++i) {
++              text += " " + ranked[i].second + "=" + std::to_string(ranked[i].first);
++            }
++            REXGPU_INFO("ThreadSamples t{} '{}':{}", std::get<1>(rows[r]), std::get<2>(rows[r]), text);
++          }
++        }
++      }
++    }).detach();
++  });
++}
++#endif
++
+ X_STATUS GraphicsSystem::SetupGuestGpu(runtime::FunctionDispatcher* function_dispatcher,
+                                        system::KernelState* kernel_state) {
+   memory_ = function_dispatcher->memory();
+@@ -136,6 +295,9 @@ X_STATUS GraphicsSystem::SetupGuestGpu(runtime::FunctionDispatcher* function_dis
+     return X_STATUS_UNSUCCESSFUL;
+   }
+   command_processor_->SetDesiredSwapPostEffect(ParseSwapPostEffect(REXCVAR_GET(swap_post_effect)));
++#if REX_PLATFORM_WIN32
++  if (REXCVAR_GET(log_thread_cpu)) StartThreadCpuLogger();
++#endif
+ 
+   // Register GPU MMIO handlers
+   // GPU registers are at 0x7FC80000-0x7FCFFFFF
+@@ -157,15 +319,75 @@ X_STATUS GraphicsSystem::SetupGuestGpu(runtime::FunctionDispatcher* function_dis
          uint64_t vsync_interval_ticks =
              std::max(uint64_t(1), uint64_t(double(guest_tick_frequency) / refresh_rate_hz));
          uint64_t no_vsync_interval_ticks = std::max(uint64_t(1), guest_tick_frequency / 1000);
@@ -2656,7 +3135,7 @@ index 8f2fcb0..3c584e9 100644
            rex::thread::Sleep(std::chrono::milliseconds(1));
          }
          return 0;
-@@ -180,8 +250,8 @@ X_STATUS GraphicsSystem::SetupGuestGpu(runtime::FunctionDispatcher* function_dis
+@@ -180,8 +402,8 @@ X_STATUS GraphicsSystem::SetupGuestGpu(runtime::FunctionDispatcher* function_dis
  
  void GraphicsSystem::Shutdown() {
    if (command_processor_) {
@@ -2666,7 +3145,7 @@ index 8f2fcb0..3c584e9 100644
    }
  
    if (vsync_worker_thread_) {
-@@ -190,6 +260,8 @@ void GraphicsSystem::Shutdown() {
+@@ -190,6 +412,8 @@ void GraphicsSystem::Shutdown() {
      vsync_worker_thread_.reset();
    }
  
@@ -2675,7 +3154,7 @@ index 8f2fcb0..3c584e9 100644
    if (presenter_) {
      if (app_context_) {
        app_context_->CallInUIThreadSynchronous([this]() { presenter_.reset(); });
-@@ -344,6 +416,24 @@ void GraphicsSystem::InitializeShaderStorage(const std::filesystem::path& cache_
+@@ -344,6 +568,24 @@ void GraphicsSystem::InitializeShaderStorage(const std::filesystem::path& cache_
    if (!REXCVAR_GET(store_shaders)) {
      return;
    }
@@ -2733,6 +3212,73 @@ index 31de175..267f7da 100644
        case xenos::FetchOpDimension::kCube:
          a_.OpUBFE(dxbc::Dest::R(size_and_is_3d_temp, size_needed_components),
                    dxbc::Src::LU(13, 13, 0, 0), dxbc::Src::LU(0, 13, 0, 0),
+diff --git a/src/graphics/pipeline/shader/spirv_translator_fetch.cpp b/src/graphics/pipeline/shader/spirv_translator_fetch.cpp
+index 9ce3bb4..dbde6be 100644
+--- a/src/graphics/pipeline/shader/spirv_translator_fetch.cpp
++++ b/src/graphics/pipeline/shader/spirv_translator_fetch.cpp
+@@ -19,9 +19,14 @@
+ #include <fmt/format.h>
+ 
+ #include <rex/assert.h>
++#include <rex/cvar.h>
+ #include <rex/graphics/pipeline/shader/spirv_translator.h>
+ #include <rex/math.h>
+ 
++REXCVAR_DEFINE_BOOL(vulkan_fix_2d_fetch_of_3d_size, true, "GPU/Vulkan",
++                    "Read the 11/11/10 size packing when a 2D fetch samples a guest 3D texture (FIFA Street "
++                    "menu bars); disable to compare with the previous behaviour.");
++
+ namespace rex::graphics {
+ 
+ void SpirvShaderTranslator::ProcessVertexFetchInstruction(
+@@ -823,6 +828,12 @@ void SpirvShaderTranslator::ProcessTextureFetchInstruction(
+       // whether the texture is 3D unconditionally.
+       data_is_3d_needed = true;
+     }
++    if (REXCVAR_GET(vulkan_fix_2d_fetch_of_3d_size) &&
++        instr.dimension == xenos::FetchOpDimension::k2D && (size_needed_components & 0b11)) {
++      // A 2D fetch of a guest 3D texture (FIFA Street k_8_8 UI textures) keeps the 11/11/10 size
++      // packing of the fetch constant; same fix as the DXBC translator.
++      data_is_3d_needed = true;
++    }
+     spv::Id data_is_3d = spv::NoResult;
+     if (data_is_3d_needed) {
+       // Get the data dimensionality from the bits 9:10 of the fetch constant
+@@ -868,10 +879,18 @@ void SpirvShaderTranslator::ProcessTextureFetchInstruction(
+         } break;
+         case xenos::FetchOpDimension::k2D:
+         case xenos::FetchOpDimension::kCube: {
++          const bool is_2d = data_is_3d != spv::NoResult && instr.dimension == xenos::FetchOpDimension::k2D;
+           if (size_needed_components & 0b1) {
+             size[0] = builder_->createTriOp(
+                 spv::OpBitFieldUExtract, type_uint_, fetch_constant_word_2, const_uint_0_,
+                 builder_->makeUintConstant(xenos::kTexture2DCubeMaxWidthHeightLog2));
++            if (is_2d) {
++              spv::Id size_3d = builder_->createTriOp(
++                  spv::OpBitFieldUExtract, type_uint_, fetch_constant_word_2, const_uint_0_,
++                  builder_->makeUintConstant(xenos::kTexture3DMaxWidthHeightLog2));
++              size[0] = builder_->createTriOp(spv::OpSelect, type_uint_, data_is_3d, size_3d,
++                                              size[0]);
++            }
+           }
+           if (size_needed_components & 0b10) {
+             spv::Id width_height_bit_count =
+@@ -879,6 +898,15 @@ void SpirvShaderTranslator::ProcessTextureFetchInstruction(
+             size[1] =
+                 builder_->createTriOp(spv::OpBitFieldUExtract, type_uint_, fetch_constant_word_2,
+                                       width_height_bit_count, width_height_bit_count);
++            if (is_2d) {
++              spv::Id bit_count_3d =
++                  builder_->makeUintConstant(xenos::kTexture3DMaxWidthHeightLog2);
++              spv::Id size_3d =
++                  builder_->createTriOp(spv::OpBitFieldUExtract, type_uint_, fetch_constant_word_2,
++                                        bit_count_3d, bit_count_3d);
++              size[1] = builder_->createTriOp(spv::OpSelect, type_uint_, data_is_3d, size_3d,
++                                              size[1]);
++            }
+           }
+           assert_zero(size_needed_components & 0b100);
+         } break;
 diff --git a/src/graphics/shaders/bytecode/d3d12_5_1/float24_round_ps_position_only.h b/src/graphics/shaders/bytecode/d3d12_5_1/float24_round_ps_position_only.h
 new file mode 100644
 index 0000000..201959d
@@ -4250,11 +4796,185 @@ index dcd2001..97dd0ed 100644
        *out_function_ptr = ptr;
        result = X_STATUS_SUCCESS;
      } else {
+diff --git a/src/kernel/xboxkrnl/xboxkrnl_rtl.cpp b/src/kernel/xboxkrnl/xboxkrnl_rtl.cpp
+index 8b862fc..bc6d50a 100644
+--- a/src/kernel/xboxkrnl/xboxkrnl_rtl.cpp
++++ b/src/kernel/xboxkrnl/xboxkrnl_rtl.cpp
+@@ -13,6 +13,7 @@
+ #pragma GCC diagnostic ignored "-Wunused-parameter"
+ 
+ #include <algorithm>
++#include <immintrin.h>
+ #include <string>
+ 
+ #include <rex/chrono/chrono_steady_cast.h>
+@@ -387,14 +388,18 @@ void RtlEnterCriticalSection_entry(ppc_ptr_t<X_RTL_CRITICAL_SECTION> cs) {
+     return;
+   }
+ 
+-  // Spin loop
++  // Spin loop. Test before the locked compare-exchange and pause between tries; the guest's spin
++  // counts (up to 65k) were meant for a dedicated hardware thread, so cap them on a shared host.
++  spin_count = std::min<uint32_t>(spin_count, 2048);
+   while (spin_count--) {
+-    if (rex::thread::atomic_cas(-1, 0, &cs->lock_count)) {
++    if (*reinterpret_cast<volatile int32_t*>(&cs->lock_count) == -1 &&
++        rex::thread::atomic_cas(-1, 0, &cs->lock_count)) {
+       // Acquired.
+       cs->owning_thread = cur_thread;
+       cs->recursion_count = 1;
+       return;
+     }
++    _mm_pause();
+   }
+ 
+   if (rex::thread::atomic_inc(&cs->lock_count) != 0) {
 diff --git a/src/system/function_dispatcher.cpp b/src/system/function_dispatcher.cpp
-index bd43109..63d1faf 100644
+index bd43109..c5f952b 100644
 --- a/src/system/function_dispatcher.cpp
 +++ b/src/system/function_dispatcher.cpp
-@@ -35,6 +35,18 @@ FunctionDispatcher* GetBoundFunctionDispatcher() {
+@@ -13,7 +13,18 @@
+  *              role as a function dispatch table rather than a CPU emulator.
+  */
+ 
++#include <atomic>
++#include <chrono>
++#include <cstdlib>
++#include <cstring>
++#include <thread>
++#if defined(__x86_64__) || defined(_M_X64)
++#include <immintrin.h>
++#endif
++#include <string>
++
+ #include <rex/assert.h>
++#include <rex/cvar.h>
+ #include <rex/dbg.h>
+ #include <rex/logging.h>
+ #include <rex/perf/counter.h>
+@@ -23,6 +34,16 @@
+ #include <rex/system/function_dispatcher.h>
+ #include <rex/system/thread_state.h>
+ 
++REXCVAR_DEFINE_INT32(guest_present_interval_cap, 1, "GPU",
++                     "FIFA Street only: highest present interval (vblanks per displayed frame) the game's D3D swap "
++                     "callback may use. The game asks for 2 in menus, replays and cutscenes, which halves the frame "
++                     "rate on any refresh rate; 1 shows every frame. 0 leaves the game's own interval unchanged.")
++    .range(0, 15);
++
++REXCVAR_DEFINE_BOOL(guest_present_interval_log, false, "GPU",
++                    "FIFA Street only: every two seconds log how many swaps asked for each present interval "
++                    "(0..15) and how many were capped, to find which scenes use an interval above 1.");
++
+ namespace rex::runtime {
+ 
+ namespace {
+@@ -32,9 +53,123 @@ FunctionDispatcher* GetBoundFunctionDispatcher() {
+   return runtime ? runtime->function_dispatcher() : nullptr;
+ }
+ 
++// FIFA Street's D3D library (fifadllzf.xex.dll, sub_8270F040) schedules each swap for the vblank
++// "last swap + interval", with the interval taken from bits 8..11 of its argument. Capping it here changes
++// how often frames are displayed and nothing else; the game's own frame pacing follows the display.
++constexpr uint32_t kFifaStreetSwapCallback = 0x8270F040;
++::PPCFunc* g_swap_callback_original = nullptr;
++uint32_t g_swap_interval_cap = 1;
++
++// Optional global frame limit applied where the game's swap is executed. REX_FPS_LIMIT_HZ=<Hz>|auto
++// ("auto" follows REX_VIDEO_MODE_REFRESH_RATE). It caps every scene, including logos and menus, at the
++// chosen refresh rate when host VSync is off; unset or 0 leaves the frame rate alone.
++double FrameLimitHz() {
++  static const double hz = [] {
++    const char* value = std::getenv("REX_FPS_LIMIT_HZ");
++    if (value && std::strcmp(value, "auto") == 0) value = std::getenv("REX_VIDEO_MODE_REFRESH_RATE");
++    const double parsed = value ? std::strtod(value, nullptr) : 0.0;
++    return parsed >= 20.0 && parsed <= 1000.0 ? parsed : 0.0;
++  }();
++  return hz;
++}
++
++void LimitFrameRate() {
++  double hz = FrameLimitHz();
++  if (hz <= 0.0 && REXCVAR_QUERY(bool, true_vsync)) {
++    // True VSync: the frame rate is capped at the refresh rate chosen in the launcher.
++    const char* refresh = std::getenv("REX_VIDEO_MODE_REFRESH_RATE");
++    const double parsed = refresh ? std::strtod(refresh, nullptr) : 0.0;
++    if (parsed >= 20.0 && parsed <= 1000.0) hz = parsed;
++  }
++  if (hz <= 0.0) return;
++  using Clock = std::chrono::steady_clock;
++  static Clock::time_point next{};
++  const auto period = std::chrono::duration_cast<Clock::duration>(std::chrono::duration<double>(1.0 / hz));
++  auto now = Clock::now();
++  if (next == Clock::time_point{}) next = now;
++  if (now < next) {
++    const auto remaining = next - now;
++    if (remaining > std::chrono::milliseconds(2)) {
++      std::this_thread::sleep_for(remaining - std::chrono::milliseconds(1));
++    }
++    while (Clock::now() < next) {
++#if defined(__x86_64__) || defined(_M_X64)
++      _mm_pause();
++#endif
++    }
++  }
++  now = Clock::now();
++  next = (now - next > period * 2) ? now + period : next + period;
++}
++
++void CappedSwapCallback(PPCContext& ctx, uint8_t* base) {
++  const uint32_t interval = (ctx.r3.u32 >> 8) & 0xF;
++  if (REXCVAR_GET(guest_present_interval_log)) {
++    static std::atomic<uint32_t> counts[16];
++    static std::atomic<uint32_t> capped{0};
++    static std::atomic<int64_t> last_report_ns{0};
++    counts[interval].fetch_add(1, std::memory_order_relaxed);
++    if (interval > g_swap_interval_cap) capped.fetch_add(1, std::memory_order_relaxed);
++    const int64_t now = std::chrono::duration_cast<std::chrono::nanoseconds>(
++                            std::chrono::steady_clock::now().time_since_epoch()).count();
++    int64_t last = last_report_ns.load(std::memory_order_relaxed);
++    if (last == 0) {
++      last_report_ns.store(now, std::memory_order_relaxed);
++    } else if (now - last >= 2'000'000'000 &&
++               last_report_ns.compare_exchange_strong(last, now, std::memory_order_relaxed)) {
++      std::string text;
++      for (uint32_t i = 0; i < 16; ++i) {
++        const uint32_t n = counts[i].exchange(0, std::memory_order_relaxed);
++        if (n) text += " interval" + std::to_string(i) + "=" + std::to_string(n);
++      }
++      REXLOG_INFO("Present interval stats (2 s):{} capped={} cap={}", text.empty() ? " none" : text,
++                  capped.exchange(0, std::memory_order_relaxed), g_swap_interval_cap);
++    }
++  }
++  if (interval > g_swap_interval_cap) {
++    ctx.r3.u64 = (ctx.r3.u64 & ~uint64_t(0xF00)) | (uint64_t(g_swap_interval_cap) << 8);
++  }
++  LimitFrameRate();
++  g_swap_callback_original(ctx, base);
++}
++
++void ApplyFifaStreetPresentIntervalCap(FunctionDispatcher& dispatcher, const std::string& module_id) {
++  if (module_id != "fifadllzf.xex.dll") return;
++  const int32_t cap = REXCVAR_GET(guest_present_interval_cap);
++  if (cap < 1) return;
++  const uint8_t* code = dispatcher.memory()->TranslateVirtual(kFifaStreetSwapCallback);
++  // Only the exact build this was found in: mflr r12 / stwu r1,-176(r1) / mr r30,r3.
++  if (!code || memory::load_and_swap<uint32_t>(code) != 0x7D8802A6 ||
++      memory::load_and_swap<uint32_t>(code + 8) != 0x9421FF50 ||
++      memory::load_and_swap<uint32_t>(code + 12) != 0x7C7E1B78) {
++    REXLOG_WARN("Present interval cap: swap callback {:08X} does not match the known code, not applied",
++                kFifaStreetSwapCallback);
++    return;
++  }
++  ::PPCFunc* original = dispatcher.GetFunction(kFifaStreetSwapCallback);
++  if (!original || original == &CappedSwapCallback) return;
++  g_swap_callback_original = original;
++  g_swap_interval_cap = uint32_t(cap);
++  dispatcher.SetFunction(kFifaStreetSwapCallback, &CappedSwapCallback);
++  REXLOG_INFO("Present interval cap: swap callback {:08X} limited to {} vblank(s) per frame",
++              kFifaStreetSwapCallback, cap);
++}
++
  }  // namespace
  
  static void InvalidFunctionTrap(PPCContext& ctx, uint8_t* /*base*/) {
@@ -4273,7 +4993,7 @@ index bd43109..63d1faf 100644
    REX_FATAL("Call to invalid or unregistered function at guest address 0x{:08X}",
              ctx.last_indirect_target);
  }
-@@ -61,29 +73,52 @@ bool FunctionDispatcher::Execute(ThreadState* thread_state, uint32_t address) {
+@@ -61,29 +196,52 @@ bool FunctionDispatcher::Execute(ThreadState* thread_state, uint32_t address) {
    SCOPE_profile_cpu_f("cpu");
    PROFILE_FUNCTION_DISPATCHED();
  
@@ -4335,7 +5055,7 @@ index bd43109..63d1faf 100644
  
    return true;
  }
-@@ -130,13 +165,16 @@ uint64_t FunctionDispatcher::Execute(ThreadState* thread_state, uint32_t address
+@@ -130,13 +288,16 @@ uint64_t FunctionDispatcher::Execute(ThreadState* thread_state, uint32_t address
  uint64_t FunctionDispatcher::ExecuteTrap(ThreadState* thread_state, uint32_t address,
                                           uint64_t args[], size_t arg_count) {
    auto* ctx = thread_state->context();
@@ -4358,7 +5078,7 @@ index bd43109..63d1faf 100644
  }
  
  uint64_t FunctionDispatcher::ExecuteInterrupt(ThreadState* thread_state, uint32_t address,
-@@ -166,49 +204,77 @@ uint64_t FunctionDispatcher::ExecuteInterrupt(ThreadState* thread_state, uint32_
+@@ -166,49 +327,77 @@ uint64_t FunctionDispatcher::ExecuteInterrupt(ThreadState* thread_state, uint32_
    auto pcr_address = memory_->TranslateVirtual(static_cast<uint32_t>(ctx->r13.u64));
    uint32_t old_tls_ptr = memory::load_and_swap<uint32_t>(pcr_address);
    memory::store_and_swap<uint32_t>(pcr_address, 0);
@@ -4452,7 +5172,7 @@ index bd43109..63d1faf 100644
      REXLOG_ERROR("Failed to initialize guest memory function table");
      return false;
    }
-@@ -226,11 +292,13 @@ bool FunctionDispatcher::InitializeFunctionTable(uint32_t code_base, uint32_t co
+@@ -226,11 +415,13 @@ bool FunctionDispatcher::InitializeFunctionTable(uint32_t code_base, uint32_t co
      entrypoint_code_base_ = code_base;
    }
  
@@ -4469,7 +5189,7 @@ index bd43109..63d1faf 100644
  FunctionDispatcher::ModuleTableInfo* FunctionDispatcher::FindModuleByAddress(
      uint32_t guest_address) {
    for (auto& mod : module_tables_) {
-@@ -253,6 +321,11 @@ bool FunctionDispatcher::SetFunction(uint32_t guest_address, ::PPCFunc* func) {
+@@ -253,6 +444,11 @@ bool FunctionDispatcher::SetFunction(uint32_t guest_address, ::PPCFunc* func) {
    std::lock_guard<std::recursive_mutex> lock(dispatch_mutex_);
    assert_true(!module_tables_.empty());
  
@@ -4481,6 +5201,14 @@ index bd43109..63d1faf 100644
    if (!FindModuleByAddress(guest_address)) {
      REXLOG_ERROR("SetFunction: address {:08X} outside all registered module ranges", guest_address);
      return false;
+@@ -343,6 +539,7 @@ void FunctionDispatcher::RegisterModule(const std::string& module_id, uint32_t c
+   } guard{this};
+ 
+   register_func(this);
++  ApplyFifaStreetPresentIntervalCap(*this, module_id);
+ 
+   ModuleRegistration reg;
+   reg.code_base = code_base;
 diff --git a/src/system/kernel_state.cpp b/src/system/kernel_state.cpp
 index 697399c..f609238 100644
 --- a/src/system/kernel_state.cpp
@@ -4531,6 +5259,63 @@ index 697399c..f609238 100644
    return std::nullopt;
  }
  
+diff --git a/src/system/runtime.cpp b/src/system/runtime.cpp
+index c10694c..2e6bceb 100644
+--- a/src/system/runtime.cpp
++++ b/src/system/runtime.cpp
+@@ -34,8 +34,37 @@ REXCVAR_DEFINE_STRING(update_data_root, "", "Runtime", "Override update data pat
+ REXCVAR_DEFINE_STRING(cache_root, "", "Runtime", "Override shader cache path");
+ REXCVAR_DEFINE_STRING(metadata_root, "", "Runtime", "Override metadata path");
+ 
++#ifdef _WIN32
++#include <windows.h>
++#endif
++
+ namespace rex {
+ 
++namespace {
++
++// Guest waits and host sleeps are only as precise as the system timer. At the default 15.6 ms tick a
++// 1 ms wait costs a whole tick. Ask for 1 ms and opt out of power throttling (EcoQoS) for this process.
++void RequestPreciseTimerAndNoThrottling() {
++#ifdef _WIN32
++  using NtSetTimerResolutionFn = LONG(NTAPI*)(ULONG, BOOLEAN, PULONG);
++  if (HMODULE ntdll = GetModuleHandleW(L"ntdll.dll")) {
++    if (auto set_resolution = reinterpret_cast<NtSetTimerResolutionFn>(
++            GetProcAddress(ntdll, "NtSetTimerResolution"))) {
++      ULONG current = 0;
++      set_resolution(10000, TRUE, &current);  // 100 ns units: 1 ms.
++    }
++  }
++  PROCESS_POWER_THROTTLING_STATE state{};
++  state.Version = PROCESS_POWER_THROTTLING_CURRENT_VERSION;
++  state.ControlMask =
++      PROCESS_POWER_THROTTLING_EXECUTION_SPEED | PROCESS_POWER_THROTTLING_IGNORE_TIMER_RESOLUTION;
++  state.StateMask = 0;
++  SetProcessInformation(GetCurrentProcess(), ProcessPowerThrottling, &state, sizeof(state));
++#endif
++}
++
++}  // namespace
++
+ // Static instance for global access
+ Runtime* Runtime::instance_ = nullptr;
+ 
+@@ -94,6 +123,14 @@ X_STATUS Runtime::Setup(RuntimeConfig config) {
+     return X_STATUS_UNSUCCESSFUL;
+   }
+   instance_ = this;
++  RequestPreciseTimerAndNoThrottling();
++  // True VSync (REX_TRUE_VSYNC=1): the guest runs unlocked from the display and the presenter does the
++  // real VSync, so the frame rate follows the refresh rate without the guest waiting on vblank events.
++  if (const char* true_vsync = std::getenv("REX_TRUE_VSYNC"); true_vsync && true_vsync[0] == '1') {
++    cvar::SetFlagByName("true_vsync", "true");
++    cvar::SetFlagByName("guest_vblank_unlocked", "true");
++    cvar::SetFlagByName("vsync", "false");
++  }
+ 
+   auto fail = [this](X_STATUS status, std::string_view reason) {
+     REXSYS_ERROR("Runtime::Setup failed: {}", reason);
 diff --git a/src/system/xmemory.cpp b/src/system/xmemory.cpp
 index 76cc877..121f321 100644
 --- a/src/system/xmemory.cpp
@@ -4663,23 +5448,48 @@ index 5bd3dc5..e573a94 100644
      keybinds.cpp
      menu_item.cpp
 diff --git a/src/ui/d3d12/d3d12_presenter.cpp b/src/ui/d3d12/d3d12_presenter.cpp
-index 306118e..2001e5c 100644
+index 306118e..66febc7 100644
 --- a/src/ui/d3d12/d3d12_presenter.cpp
 +++ b/src/ui/d3d12/d3d12_presenter.cpp
-@@ -478,7 +478,7 @@ D3D12Presenter::ConnectOrReconnectPaintingToSurfaceFromUIThread(Surface& new_sur
+@@ -33,6 +33,13 @@
+ REXCVAR_DEFINE_BOOL(d3d12_allow_variable_refresh_rate_and_tearing, true, "UI/D3D12",
+                     "Allow variable refresh rate and tearing");
+ 
++// Without the tearing flag, flip-model presentation is gated by the display refresh and the readback fence waits,
++// which share the direct queue, each cost two refreshes (measured 33.5 ms per resolve at 60 Hz, 0.3 ms with it).
++// The game clock is paced separately, so presenting without waiting for the display does not change game speed.
++REXCVAR_DEFINE_BOOL(d3d12_paced_present_tearing, true, "UI/D3D12",
++                    "Create the swap chain with tearing support even when VRR is not requested, so presents do "
++                    "not throttle the direct queue (set to false to restore the old behaviour)");
++
+ namespace rex::ui::d3d12 {
+ 
+ // Generated with `xb buildshaders`.
+@@ -408,7 +415,9 @@ D3D12Presenter::ConnectOrReconnectPaintingToSurfaceFromUIThread(Surface& new_sur
+     swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+     swap_chain_desc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
+     swap_chain_desc.Flags = 0;
+-    if (REXCVAR_GET(d3d12_allow_variable_refresh_rate_and_tearing) && dxgi_supports_tearing_) {
++    if ((REXCVAR_GET(d3d12_allow_variable_refresh_rate_and_tearing) ||
++         REXCVAR_GET(d3d12_paced_present_tearing)) &&
++        dxgi_supports_tearing_) {
+       // Allow tearing in borderless fullscreen to support variable refresh
+       // rate.
+       swap_chain_desc.Flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
+@@ -478,7 +487,7 @@ D3D12Presenter::ConnectOrReconnectPaintingToSurfaceFromUIThread(Surface& new_sur
          provider_.OffsetRTVDescriptor(rtv_heap_start, PaintContext::kRTVIndexSwapChainBuffer0 + i));
    }
  
 -  is_vsync_implicit_out = false;
-+  is_vsync_implicit_out = REXCVAR_QUERY(bool, vsync);
++  is_vsync_implicit_out = (REXCVAR_QUERY(bool, vsync) || REXCVAR_QUERY(bool, true_vsync));
    return SurfacePaintConnectResult::kSuccess;
  }
  
-@@ -1155,9 +1155,11 @@ Presenter::PaintResult D3D12Presenter::PaintAndPresentImpl(bool execute_ui_drawe
+@@ -1155,9 +1164,11 @@ Presenter::PaintResult D3D12Presenter::PaintAndPresentImpl(bool execute_ui_drawe
    // fullscreen is ever used in, the allow tearing flag must not be passed in
    // fullscreen, but DXGI fullscreen is largely unneeded with the flip
    // presentation model used in Direct3D 12).
-+  const bool presentation_vsync = REXCVAR_QUERY(bool, vsync);
++  const bool presentation_vsync = (REXCVAR_QUERY(bool, vsync) || REXCVAR_QUERY(bool, true_vsync));
    HRESULT present_result = paint_context_.swap_chain->Present(
 -      0, DXGI_PRESENT_RESTART |
 -             (paint_context_.swap_chain_allows_tearing ? DXGI_PRESENT_ALLOW_TEARING : 0));
@@ -5211,7 +6021,7 @@ index b94fe9e..756b89a 100644
        debug_overlay_.reset();
      } else {
 diff --git a/src/ui/vulkan/vulkan_presenter.cpp b/src/ui/vulkan/vulkan_presenter.cpp
-index 23645ef..d582c50 100644
+index 23645ef..1dc0ba8 100644
 --- a/src/ui/vulkan/vulkan_presenter.cpp
 +++ b/src/ui/vulkan/vulkan_presenter.cpp
 @@ -11,6 +11,8 @@
@@ -5394,7 +6204,7 @@ index 23645ef..d582c50 100644
    // variable refresh rate may be used where it's available.
    // Note: If the priorities here are changes, update the cvar descriptions.
 -  if (REXCVAR_GET(vulkan_allow_present_mode_immediate) &&
-+  const bool presentation_vsync = REXCVAR_QUERY(bool, vsync);
++  const bool presentation_vsync = (REXCVAR_QUERY(bool, vsync) || REXCVAR_QUERY(bool, true_vsync));
 +  if (!presentation_vsync && REXCVAR_GET(vulkan_allow_present_mode_immediate) &&
        std::find(present_modes.cbegin(), present_modes.cend(), VK_PRESENT_MODE_IMMEDIATE_KHR) !=
            present_modes.cend()) {

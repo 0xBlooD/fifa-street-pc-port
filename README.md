@@ -20,7 +20,15 @@ ReStreet is a Windows PC version of FIFA Street (2012) made by recompiling the X
 
 You need your own copy of the game: an Xbox 360 ISO of FIFA Street (2012). The ISO and the game files are not included.
 
-**v1.1 is offline only.** It has no online play.
+**v1.2 is offline only.** It has no online play.
+
+## What's new in v1.2
+
+- **Cutscenes and goal replays at your refresh rate**, no longer capped at 40 FPS.
+- **Goals and match setup no longer drop to 30-40 FPS**, and menus run at 60 FPS.
+- **Vulkan: goal replays are sharp** (they were blurred).
+- **Direct3D 12 with VSync on no longer falls to 1 FPS** on some laptops.
+- **Updating removes the online patch**, and works over v1.1 with or without it. Saves and settings are kept. See the full [changelog](CHANGELOG.md).
 
 ## What's new in v1.1
 

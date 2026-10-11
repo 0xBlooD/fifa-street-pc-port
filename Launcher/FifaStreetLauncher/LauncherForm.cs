@@ -159,7 +159,7 @@ public class LauncherForm : Form, ISceneHost, IUiScaled
         using (var bar = new SolidBrush(StreetTheme.Yellow)) g.FillPolygon(bar, StreetTheme.Slant(tag, 12));
         using (var tagFont = new Font(StreetTheme.CondensedFamily, 18, FontStyle.Bold, GraphicsUnit.Pixel))
         using (var dark = new SolidBrush(StreetTheme.YellowDark))
-            StreetTheme.DrawSpaced(g, "V1.1 · OFFLINE", tagFont, dark, new PointF(Left + 14, 246), 2.8f);
+            StreetTheme.DrawSpaced(g, "V1.2 · OFFLINE", tagFont, dark, new PointF(Left + 14, 246), 2.8f);
 
         using var name = new Font("Segoe UI", 15, FontStyle.Regular, GraphicsUnit.Pixel);
         StreetTheme.DrawLabelValue(g, "Ported by:", "SamuelitoDaVila", name, StreetTheme.Ink, StreetTheme.Ink, Left, 642);
@@ -1106,6 +1106,11 @@ startInfo.Environment["REX_DRAW_RESOLUTION_SCALE_Y"] =
             startInfo.Environment["REX_WINDOW_HEIGHT"] = height.ToString();
             // Apply the selected rate to both the monitor and Xbox video timing.
             startInfo.Environment["REX_VIDEO_MODE_REFRESH_RATE"] = refresh;
+            // Lift the game's own 40 FPS replay/cutscene cap up to the chosen rate.
+            startInfo.Environment["REX_FRAME_LIMITER_MIN_HZ"] = "auto";
+            // No forced synchronous readbacks: they held goals and match setup at 30-40 FPS.
+            startInfo.Environment["REX_READBACK_SOME_SYNC_ADDRS"] = "00000000";
+            startInfo.Environment["REX_READBACK_SOME_SYNC_BELOW"] = "0";
             ApplyGameLanguage(startInfo);
             // Disable the guest pacing limit together with display VSync.
             startInfo.Environment["REX_GUEST_VBLANK_UNLOCKED"] =
@@ -1140,6 +1145,16 @@ startInfo.Environment["REX_DRAW_RESOLUTION_SCALE_Y"] =
                 // not interchangeable with Vulkan device indices.
                 startInfo.Environment["REX_VULKAN_DEVICE"] = "-1";
                 startInfo.Environment["REX_RENDER_TARGET_PATH_VULKAN"] = "fbo";
+                // Vulkan-only image settings that remove the goal-replay blur
+                // (user-tested together on AMD; not bisected to a single one).
+                startInfo.Environment["REX_DRAW_RESOLUTION_SCALED_TEXTURE_OFFSETS"] = "false";
+                startInfo.Environment["REX_DEPTH_FLOAT24_CONVERT_IN_PIXEL_SHADER"] = "true";
+                startInfo.Environment["REX_GAMMA_RENDER_TARGET_AS_UNORM16"] = "false";
+                startInfo.Environment["REX_SNORM16_RENDER_TARGET_FULL_RANGE"] = "false";
+                startInfo.Environment["REX_VULKAN_DYNAMIC_RENDERING"] = "false";
+                startInfo.Environment["REX_HALF_PIXEL_OFFSET"] = "false";
+                startInfo.Environment["REX_ANISOTROPIC_OVERRIDE"] = "-1";
+                startInfo.Environment["REX_DIRECT_HOST_RESOLVE"] = "false";
                 // Override legacy TOML values: checked means FIFO, unchecked
                 // requests immediate presentation without display synchronization.
                 // With VSync on, prefer MAILBOX (latest frame wins, no tearing, never blocks the queue).

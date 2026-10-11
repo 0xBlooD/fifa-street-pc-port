@@ -1,34 +1,35 @@
 # Validation and known limitations
 
-Last updated: **9 October 2026**, for **ReStreet v1.1** (offline only). This page separates what was tested from what was not.
+Last updated: **11 October 2026**, for **ReStreet v1.2** (offline only). This page separates what was tested from what was not.
 
-## What was tested for v1.1
+## What was tested for v1.2
 
-All of this was tested by the developer on one Windows 11 PC with an AMD Radeon RX 9070 XT, at 100% display scale unless stated.
+All of this was tested by the developer on one Windows 11 PC with an AMD Radeon RX 9070 XT and a Ryzen 5 7600, at 100% display scale.
 
 | Check | Result |
 |---|---|
-| ReStreet logos on the main menu and the Press Start screen (final installer, default `Mods` folder) | Passed |
-| Direct play (`--play` and the desktop shortcut) | Passed |
-| Direct3D 12: VSync (paced mode) | Passed |
-| Vulkan: gameplay with the new "Some" readback | Passed |
+| Direct3D 12 at 60 Hz: menus, cutscenes, goals, replays and match setup at 60 FPS | Passed |
+| Vulkan: goal replays sharp (no blur) | Passed |
+| Vulkan: menus at 60 FPS, main menu not stretched | Passed |
+| Update over v1.1 offline (installer `--update-test` on a copy) | Passed |
+| Update over v1.1 with the online patch: files replaced, online patch removed, settings kept | Passed |
 
-Tested on v1.0 and not repeated for v1.1: clean installation from the original ISO, update over an existing installation with a save, Windows display scale 125% and 150%, the exit shortcut and the FPS counter.
+**Not yet tested on v1.2:** a clean installation from the ISO, NVIDIA and Intel graphics, the update over an installation with the v1.0 online patch, a full play session from an updated installation.
 
-**Not yet tested on v1.1:** a clean installation from the ISO with the v1.1 installer, an update of a v1.0 installation with a save using the v1.1 installer, Vulkan with VSync on.
+Known on v1.2: with VSync on above 60 Hz, some scenes run at half the refresh rate (for example 50 FPS at 100 Hz). Vulkan runs at 30 FPS outside menus on the test PC; Direct3D 12 is recommended.
 
-The game binaries (main module, game module and World Tour module) are the same as in v0.4.1. World Tour, Practice, Direct3D 12 and Vulkan were validated on earlier releases; this release changes the graphics readback, VSync, the launcher, the installer and the logo patch.
+The game module was rebuilt for v1.2 (the game's own 40 FPS limiter for replays and cutscenes now follows the refresh rate chosen in the launcher). World Tour and Practice were validated on earlier releases and not repeated.
 
 ## Graphics backends
 
 The package contains two validated backend folders, `Game/Backends/D3D12` and `Game/Backends/Vulkan`. The launcher copies the selected backend's `rexruntime.dll` and `rexgpu-xenos.dll` beside `fifastreet.exe` before launch. Direct3D 12 is the default.
 
-### SHA-256 of the backend files in v1.1
+### SHA-256 of the backend files in v1.2
 
 | Backend | `rexruntime.dll` | `rexgpu-xenos.dll` |
 |---|---|---|
-| Direct3D 12 | `809AFAD3E2DBDCD68C88B39365FF54EECBEF4E1DE4698A936C2F2D1CC368F4E0` | `9DDB0DD0BB4916A16AB4B757261CDF37E0B0EAB16F40DC9EA76233510E453E7C` |
-| Vulkan | `F3FC94EF7EF154A737C7143FA96874C2225FA84D8577DD9428105524E0B5954E` | `BA05650F760A0C768C60C531854A925CB9E600A8C8E7425B160B6C95FF59251B` |
+| Direct3D 12 | `D572DF8FBCDB2B8972BBD0A4DA729260088873FF74FD40CB06D95E9568843CD3` | `E9E407D0EE59A8D6FBEE5AD5A98F49727314826687693C00A8FD68D8A9E0FB9F` |
+| Vulkan | `870653C3AF20506413F5891A6C21C3E28491994B8691EA371B0D918BDCCBC7BF` | `C956E3B7701032851D46B17D5994A414B1C14C3C835B2EE6052C9F4421598085` |
 
 The installer checks its payload against the hashes in its own manifest before installing.
 
@@ -54,7 +55,7 @@ Output resolution and internal rendering scale are independent. Internal resolut
 ## Known limitations
 
 - No universal hardware, driver or frame-rate guarantee. 3x/4x internal rendering and 4K output are not guaranteed 60 FPS modes.
-- No online play in v1.1.
+- No online play in v1.2.
 - The window title of the game itself still reads "FIFA Street PC"; the launcher and installer use the ReStreet name.
 - The exit prompt only opens with the START + B (START + Circle) shortcut, not from the main menu.
 - The installer expands its details panel by 180 px, which does not fit on screens 768 px high or less.

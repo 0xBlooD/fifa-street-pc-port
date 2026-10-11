@@ -1,22 +1,24 @@
-# ReStreet - FIFA Street 2012 Recompiled v1.1
+# ReStreet - FIFA Street 2012 Recompiled v1.2
 
-Smoother graphics and VSync, direct play, the ReStreet logo, and a setup and launcher that fit any screen. This version is offline only.
+Smoother frame rate in the whole game, sharp Vulkan replays, and an update that removes the online patch. This version is offline only.
 
-## New in v1.1
+## Improved in v1.2
 
-- **ReStreet logo.** The main menu and the Press Start screen now show the ReStreet logo. It is applied by a small patch in the new `Mods` folder next to `Game` and `GameData`, which the game applies while reading its files. Your game files are not modified: delete the files in `Mods` to get the original logo back.
-- **Improved "Some" graphics readback, now the default.** The Some mode was reworked to remove the graphical garbage it used to cause on some courts (floor reflections, flickering floor lines) while keeping its speed. It is the default in the Balanced and Quality profiles, and occlusion queries are off by default there. Pick "Full (compatible)" in the Compatibility tab if you prefer the old behaviour. Settings you already saved are kept.
-- **VSync works smoothly.** The old VSync made the game run at only a few FPS on some PCs. VSync now keeps the game locked to your refresh rate with no tearing. Turning VSync off still gives an unlocked frame rate.
-- **Direct play.** Start the game without opening the launcher window: run `FifaStreetLauncher.exe --play`, or click the new **Shortcut** button in the launcher to create a desktop shortcut that does exactly that. It uses the settings you last chose in the launcher and closes by itself after the game exits.
+- **Cutscenes and goal replays are no longer capped at 40 FPS.** The game has its own frame limiter that held them at 40 FPS. It now follows the refresh rate chosen in the launcher.
+- **Goals and match setup no longer drop to 30-40 FPS.** A forced wait for the graphics card on every frame was removed.
+- **Menus run at 60 FPS** instead of 30.
 
 ## Fixed
 
-- Setup and launcher layout on any resolution or Windows scale. On some screens (for example a 4K TV set to 1080p with Windows scale at 150%) the controls could be smaller than the window, overlap the title and be cut off.
-- The window follows you when it is moved to a monitor with a different scale.
+- **Vulkan: goal replays were blurred.** They are now as sharp as in Direct3D 12.
+- **Direct3D 12 with VSync on could fall to 1 FPS** on some laptops. Measured on an RTX 4060 Laptop: 0.6 FPS to a steady 60 FPS in the same scene.
+- **Updating works over v1.1 with or without the online patch.** If the online patch is installed, the update removes it (online.json, online-patch.json, the OnlinePatch folder, tools\ReStreetAssetExplorer.exe and the stadium pictures). A copy of the replaced files is kept in `.updates`. Saves, game data and launcher settings are kept.
 
-## Unchanged
+## Known limitations
 
-The game files are the same as in v0.4.1, so World Tour, saves and your launcher settings keep working. Saves live in `Documents\fifastreet` and are not touched by the installer.
+- With VSync on above 60 Hz, some scenes can run at half the refresh rate (for example 50 FPS at 100 Hz). Turn VSync off (ideally with VRR) for an unlocked frame rate.
+- With VSync on in Direct3D 12 you may see tearing in fullscreen.
+- Vulkan still runs at 30 FPS outside menus on some PCs. Direct3D 12 is recommended.
 
 ## How to install
 

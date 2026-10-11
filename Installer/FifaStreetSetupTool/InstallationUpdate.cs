@@ -6,6 +6,12 @@ internal static class InstallationUpdate
         File.Exists(Path.Combine(root, "Game", "fifastreet.exe")) &&
         File.Exists(Path.Combine(root, "GameData", "default.xex"));
 
+    // What the ReStreet online patch (v1.1-online-N) adds to an installation, apart from files the payload replaces.
+    static readonly string[] OnlineLeftovers =
+    {
+        "online.json", "Game/online.json", "online-patch.json", "tools/ReStreetAssetExplorer.exe",
+    };
+
     internal static void Apply(string bundle, string root)
     {
         root = Path.GetFullPath(root);
@@ -52,8 +58,36 @@ internal static class InstallationUpdate
                 File.Copy(Path.Combine(bundle, "payload", name), target, true);
                 Console.WriteLine("Updated " + name);
             }
+            // The online patch replaced files that the payload above has just overwritten; what is left is what it added.
+            foreach (string name in OnlineLeftovers)
+            {
+                string target = Path.Combine(root, name), saved = Path.Combine(backup, name);
+                if (!File.Exists(target)) continue;
+                if ((File.GetAttributes(target) & FileAttributes.ReparsePoint) != 0) throw new IOException("Updates cannot remove linked files.");
+                Directory.CreateDirectory(Path.GetDirectoryName(saved)!);
+                File.Copy(target, saved);
+                touched.Add((target, saved));
+                File.Delete(target);
+                Console.WriteLine("Removed online file " + name);
+            }
+            string toolsFolder = Path.Combine(root, "tools");
+            if (Directory.Exists(toolsFolder) && !Directory.EnumerateFileSystemEntries(toolsFolder).Any()) Directory.Delete(toolsFolder);
             InstallerEngine.CancellationToken.ThrowIfCancellationRequested();
             File.WriteAllText(Path.Combine(backup, "update-complete.txt"), "Previous binaries retained. GameData and user preferences were not modified.");
+            // Only the online patch's saved copies of the old offline files: v1.2 replaces them, so they are not kept.
+            string onlineBackup = Path.Combine(root, "OnlinePatch");
+            if (Directory.Exists(onlineBackup) && (File.GetAttributes(onlineBackup) & FileAttributes.ReparsePoint) == 0)
+            {
+                try { Directory.Delete(onlineBackup, true); Console.WriteLine("Removed the online patch backup folder."); }
+                catch (Exception error) when (error is IOException or UnauthorizedAccessException) { Console.WriteLine("Could not remove OnlinePatch (delete it by hand): " + error.Message); }
+            }
+            // Stadium pictures the online launcher generated with the asset tool; the offline launcher never uses them.
+            string thumbs = Path.Combine(root, "Game", "stadium-thumbs");
+            if (Directory.Exists(thumbs) && (File.GetAttributes(thumbs) & FileAttributes.ReparsePoint) == 0)
+            {
+                try { Directory.Delete(thumbs, true); Console.WriteLine("Removed the online stadium pictures."); }
+                catch (Exception error) when (error is IOException or UnauthorizedAccessException) { Console.WriteLine("Could not remove Game\\stadium-thumbs (delete it by hand): " + error.Message); }
+            }
             Console.WriteLine("Update complete. Previous files saved at: " + backup);
         }
         catch (Exception original)

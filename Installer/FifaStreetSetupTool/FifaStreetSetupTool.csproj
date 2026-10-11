@@ -5,7 +5,7 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <AssemblyName>FifaStreetSetup</AssemblyName>
     <ApplicationIcon>..\recomp-template\src\fifastreet.ico</ApplicationIcon>
     <ImplicitUsings>enable</ImplicitUsings>

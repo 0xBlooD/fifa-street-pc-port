@@ -60,6 +60,7 @@ if(TARGET fifastreet_fifadllzf_xex)
     endif()
     target_sources(fifastreet_fifadllzf_xex PRIVATE
         src/stubs.cpp
+        src/native_libc_hooks.cpp
     )
 endif()
 

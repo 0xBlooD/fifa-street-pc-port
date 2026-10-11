@@ -1,5 +1,24 @@
 ﻿# ReStreet - FIFA Street 2012 Recompiled: changelog
 
+## v1.2
+
+Menus, cutscenes, goals and replays now run at your refresh rate, Vulkan replays are sharp, Direct3D 12 no longer drops to 1 FPS with VSync on, and updating over an online-patched install removes the online patch.
+
+### Improved
+- **Cutscenes and goal replays are no longer capped at 40 FPS.** The game has its own frame limiter that held replays and cutscenes at 40 FPS. It now follows the refresh rate chosen in the launcher.
+- **Goals and match setup no longer drop to 30-40 FPS.** A forced wait for the graphics card on every frame was removed.
+- **Menus run at 60 FPS** instead of 30.
+
+### Fixed
+- **Vulkan: goal replays were blurred.** Replays are now as sharp as in Direct3D 12.
+- **Direct3D 12 with VSync on could fall to 1 FPS** (seen on laptops, with the Full, Some and Fast readback modes, getting worse as the game asked for more graphics readbacks per frame). Each wait for the graphics card cost two screen refreshes. The swap chain now supports tearing even when VSync is on, so presenting no longer holds back those waits; the game clock stays paced to your refresh rate. Measured on an RTX 4060 Laptop: 0.6 FPS to a steady 60 FPS in the same scene.
+- Updating works over v1.1 with or without the online patch. If the online patch is installed, the update removes it (online.json, online-patch.json, the OnlinePatch backup folder, tools\ReStreetAssetExplorer.exe and the stadium pictures). A copy of the replaced files is kept in `.updates` first. Saves, game data and launcher settings are kept.
+
+### Notes
+- With VSync on at refresh rates above 60 Hz, some scenes can run at half the refresh rate (for example 50 FPS at 100 Hz). Turn VSync off (ideally with VRR) for an unlocked frame rate.
+- With VSync on in Direct3D 12 you may see tearing in fullscreen. Turn VSync off if you prefer VRR.
+- Vulkan still runs at 30 FPS outside menus on some PCs; Direct3D 12 is recommended.
+
 ## v1.1
 
 Smoother graphics and VSync, direct play, and a setup and launcher that fit any screen.
