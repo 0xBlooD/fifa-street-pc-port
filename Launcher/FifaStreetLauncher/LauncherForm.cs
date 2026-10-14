@@ -159,7 +159,7 @@ public class LauncherForm : Form, ISceneHost, IUiScaled
         using (var bar = new SolidBrush(StreetTheme.Yellow)) g.FillPolygon(bar, StreetTheme.Slant(tag, 12));
         using (var tagFont = new Font(StreetTheme.CondensedFamily, 18, FontStyle.Bold, GraphicsUnit.Pixel))
         using (var dark = new SolidBrush(StreetTheme.YellowDark))
-            StreetTheme.DrawSpaced(g, "V1.2 · OFFLINE", tagFont, dark, new PointF(Left + 14, 246), 2.8f);
+            StreetTheme.DrawSpaced(g, "V1.3 · OFFLINE", tagFont, dark, new PointF(Left + 14, 246), 2.8f);
 
         using var name = new Font("Segoe UI", 15, FontStyle.Regular, GraphicsUnit.Pixel);
         StreetTheme.DrawLabelValue(g, "Ported by:", "SamuelitoDaVila", name, StreetTheme.Ink, StreetTheme.Ink, Left, 642);
@@ -1106,23 +1106,25 @@ startInfo.Environment["REX_DRAW_RESOLUTION_SCALE_Y"] =
             startInfo.Environment["REX_WINDOW_HEIGHT"] = height.ToString();
             // Apply the selected rate to both the monitor and Xbox video timing.
             startInfo.Environment["REX_VIDEO_MODE_REFRESH_RATE"] = refresh;
-            // Lift the game's own 40 FPS replay/cutscene cap up to the chosen rate.
-            startInfo.Environment["REX_FRAME_LIMITER_MIN_HZ"] = "auto";
-            // No forced synchronous readbacks: they held goals and match setup at 30-40 FPS.
-            startInfo.Environment["REX_READBACK_SOME_SYNC_ADDRS"] = "00000000";
+            // VSync on: lift the game's own 40 FPS replay/cutscene cap up to the chosen rate.
+            // VSync off: no frame limit at all (the game's own limiter is raised out of the way).
+            startInfo.Environment["REX_FRAME_LIMITER_MIN_HZ"] = vsyncBox.Checked ? "auto" : "1000";
+            // Keep the one synchronous readback that keeps stadium floors clean (default 1282B000), drop the
+            // other small-range ones that held goals, replays and match setup below the chosen rate.
+            startInfo.Environment.Remove("REX_READBACK_SOME_SYNC_ADDRS");
             startInfo.Environment["REX_READBACK_SOME_SYNC_BELOW"] = "0";
             ApplyGameLanguage(startInfo);
-            // Disable the guest pacing limit together with display VSync.
-            startInfo.Environment["REX_GUEST_VBLANK_UNLOCKED"] =
-                vsyncBox.Checked ? "false" : "true";
+            // The game keeps its own clock in both modes (True VSync shows its newest frame at each refresh).
+            startInfo.Environment["REX_GUEST_VBLANK_UNLOCKED"] = "true";
             startInfo.Environment["REX_FULLSCREEN"] =
                 fullscreen ? "true" : "false";
             startInfo.Environment["REX_MONITOR"] = (monitor + 1).ToString();
             startInfo.Environment["REX_LAUNCHER_MONITOR_DEVICE"] = Screen.AllScreens[monitor].DeviceName;
-            // "VSync" is implemented as paced presentation: the game clock stays locked to the refresh rate and
-            // frames are presented without blocking the graphics queue. The real blocking VSync of the host swap chain
-            // made every GPU wait cost two vblanks (a few FPS), and it does not tear because tearing is not requested.
+            // "VSync" = True VSync: no tearing, the display shows the game's newest frame at every refresh of the
+            // chosen rate (any rate), and the FPS counter shows displayed frames like GPU overlays do. The old
+            // blocking host VSync (REX_VSYNC) stays off: it made every GPU wait cost two refreshes.
             startInfo.Environment["REX_VSYNC"] = "false";
+            startInfo.Environment["REX_TRUE_VSYNC"] = vsyncBox.Checked ? "1" : "0";
             startInfo.Environment["REX_NATIVE_2X_MSAA"] =
                 msaaBox.Checked ? "true" : "false";
             startInfo.Environment["REX_SWAP_POST_EFFECT"] = postEffect;
@@ -1279,9 +1281,13 @@ startInfo.Environment["REX_DRAW_RESOLUTION_SCALE_Y"] =
     private static extern int ChangeDisplaySettingsEx(
         string deviceName, ref DEVMODE mode, IntPtr window, uint flags, IntPtr parameter);
 
+    [DllImport("user32.dll", CharSet = CharSet.Ansi, EntryPoint = "ChangeDisplaySettingsEx")]
+    private static extern int ChangeDisplaySettingsExToRegistry(
+        string deviceName, IntPtr mode, IntPtr window, uint flags, IntPtr parameter);
+
     private void ApplyMonitorRefresh(int monitor, string refresh, int width, int height)
     {
-        const uint CDS_TEST = 2, CDS_FULLSCREEN = 4;
+        const uint CDS_TEST = 2;
         const int DM_DISPLAYFREQUENCY = 0x00400000;
         if (monitor < 0 || monitor >= Screen.AllScreens.Length ||
             !int.TryParse(refresh, out int hz) || hz <= 1) {
@@ -1308,7 +1314,10 @@ startInfo.Environment["REX_DRAW_RESOLUTION_SCALE_Y"] =
             throw new InvalidOperationException(
                 $"The selected resolution and {hz} Hz are not available on this monitor (Windows code {result}).");
         }
-        result = ChangeDisplaySettingsEx(device, ref requested, IntPtr.Zero, CDS_FULLSCREEN, IntPtr.Zero);
+        // Dynamic change (not CDS_FULLSCREEN): a CDS_FULLSCREEN mode is tied to the launcher, and Windows dropped
+        // it back to the desktop rate when the game window took focus (60 Hz chosen, 165 Hz measured in game).
+        // It is not saved to the registry; RestoreMonitorRefresh puts the previous mode back after the game exits.
+        result = ChangeDisplaySettingsEx(device, ref requested, IntPtr.Zero, 0, IntPtr.Zero);
         if (result != 0) {
             throw new InvalidOperationException($"Windows could not apply {hz} Hz (code {result}).");
         }
@@ -1328,7 +1337,12 @@ startInfo.Environment["REX_DRAW_RESOLUTION_SCALE_Y"] =
         if (changedDisplay == null) return;
         string device = changedDisplay;
         changedDisplay = null;
-        int result = ChangeDisplaySettingsEx(device, ref previousDisplayMode, IntPtr.Zero, 0, IntPtr.Zero);
+        // Back to the mode saved in Windows display settings (the change above is dynamic and never saved);
+        // fall back to the mode read before the change.
+        int result = ChangeDisplaySettingsExToRegistry(device, IntPtr.Zero, IntPtr.Zero, 0, IntPtr.Zero);
+        if (result != 0) {
+            result = ChangeDisplaySettingsEx(device, ref previousDisplayMode, IntPtr.Zero, 0, IntPtr.Zero);
+        }
         if (result != 0) {
             ShowError($"Could not restore the monitor refresh rate (Windows code {result}). Check Windows display settings.");
         }

@@ -1,24 +1,28 @@
-# ReStreet - FIFA Street 2012 Recompiled v1.2
+# ReStreet - FIFA Street 2012 Recompiled v1.3
 
-Smoother frame rate in the whole game, sharp Vulkan replays, and an update that removes the online patch. This version is offline only.
+![ReStreet 1.3](images/restreet-1.3-banner.png)
 
-## Improved in v1.2
+True VSync on Direct3D 12 and Vulkan, an FPS counter that matches GPU overlays, and clean stadium floors on every graphics card. This version is offline only.
 
-- **Cutscenes and goal replays are no longer capped at 40 FPS.** The game has its own frame limiter that held them at 40 FPS. It now follows the refresh rate chosen in the launcher.
-- **Goals and match setup no longer drop to 30-40 FPS.** A forced wait for the graphics card on every frame was removed.
-- **Menus run at 60 FPS** instead of 30.
+## New in v1.3
+
+- **True VSync.** With VSync on, the screen shows a new frame on every refresh, at whatever refresh rate you pick in the launcher (60, 120, 144, 165 Hz and beyond), with no tearing. Each refresh shows the game's newest frame: no half-rate drops, uneven pacing or stutter when the game window has focus. Same on Direct3D 12 and Vulkan.
+- **Works with Adaptive Sync / FreeSync.** Frames are handed to the display on an even clock, so the monitor refreshes once per frame instead of holding frames for 2 or 3 refreshes.
+- **Honest FPS counter.** With VSync on, the in-game counter counts the frames that reach the screen, the same number AMD, NVIDIA and other overlays show.
+- **VSync off = no frame limit.** With VSync on, the game is capped at twice the refresh rate so a fresh frame is always ready without wasting power.
+- **The launcher's refresh rate change sticks** while the game is in front, and the refresh rate saved in Windows is restored when the game closes.
 
 ## Fixed
 
-- **Vulkan: goal replays were blurred.** They are now as sharp as in Direct3D 12.
-- **Direct3D 12 with VSync on could fall to 1 FPS** on some laptops. Measured on an RTX 4060 Laptop: 0.6 FPS to a steady 60 FPS in the same scene.
-- **Updating works over v1.1 with or without the online patch.** If the online patch is installed, the update removes it (online.json, online-patch.json, the OnlinePatch folder, tools\ReStreetAssetExplorer.exe and the stadium pictures). A copy of the replaced files is kept in `.updates`. Saves, game data and launcher settings are kept.
+- **Graphical garbage on some court floors** on slower graphics cards: the floor data is always read for the current frame.
+- **A crash when opening some main menu options** with Direct3D 12.
+- **Smoother render-to-texture images** at higher internal resolutions (for example the 3D portraits the game draws for players without a photo).
+- **Intro and cutscene videos** play at the correct speed with clean sound, with VSync on or off.
 
 ## Known limitations
 
-- With VSync on above 60 Hz, some scenes can run at half the refresh rate (for example 50 FPS at 100 Hz). Turn VSync off (ideally with VRR) for an unlocked frame rate.
-- With VSync on in Direct3D 12 you may see tearing in fullscreen.
-- Vulkan still runs at 30 FPS outside menus on some PCs. Direct3D 12 is recommended.
+- With VSync on, the game cannot show more frames than it produces: if a scene runs below your refresh rate, some frames stay on screen for two refreshes. 60 Hz is the safest choice for a perfectly steady match.
+- The 3D portraits of players without a photo (generated World Tour squad players, created players) are drawn small by the game and look soft on large screens. This is how the game draws them.
 
 ## How to install
 

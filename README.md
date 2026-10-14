@@ -10,7 +10,7 @@
 
 [Download](https://github.com/samuelit0davila/fifa-street-pc-port/releases/latest) · [Changelog](CHANGELOG.md) · [Report a bug](https://github.com/samuelit0davila/fifa-street-pc-port/issues) · [Build from source](docs/BUILDING.md)
 
-<img src="docs/images/start-screen.png" alt="ReStreet running on PC" width="1000">
+<img src="docs/images/restreet-1.3-banner.png" alt="ReStreet 1.3: True VSync, smooth motion, honest FPS counter, Adaptive Sync, clean courts, uncapped when VSync is off" width="1000">
 
 </div>
 
@@ -20,7 +20,18 @@ ReStreet is a Windows PC version of FIFA Street (2012) made by recompiling the X
 
 You need your own copy of the game: an Xbox 360 ISO of FIFA Street (2012). The ISO and the game files are not included.
 
-**v1.2 is offline only.** It has no online play.
+**v1.3 is offline only.** It has no online play.
+
+## What's new in v1.3
+
+- **True VSync on Direct3D 12 and Vulkan:** no tearing and a new frame on every refresh, at any refresh rate you pick in the launcher (60, 120, 144, 165 Hz and beyond).
+- **Smooth motion:** each refresh shows the game's newest frame, with no half-rate drops or stutter when the game window has focus. Works with **Adaptive Sync / FreeSync** on.
+- **Honest FPS counter:** with VSync on, the in-game counter shows the frames that reach the screen, the same number as AMD, NVIDIA and other overlays.
+- **VSync off = no frame limit.**
+- **Clean stadium floors** on every graphics card, and a menu crash fixed.
+- Installs over v1.2. Saves and settings are kept. See the full [changelog](CHANGELOG.md).
+
+<img src="docs/images/start-screen.png" alt="ReStreet running on PC" width="1000">
 
 ## What's new in v1.2
 

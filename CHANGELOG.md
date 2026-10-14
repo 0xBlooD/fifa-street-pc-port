@@ -1,5 +1,26 @@
 ﻿# ReStreet - FIFA Street 2012 Recompiled: changelog
 
+## v1.3
+
+True VSync on Direct3D 12 and Vulkan: no tearing, a new frame on every refresh at any refresh rate (also with Adaptive Sync / FreeSync), an FPS counter that matches GPU overlays, and clean stadium floors on every graphics card.
+
+### New
+- **True VSync.** With VSync on, the screen shows a new frame on every refresh, at whatever refresh rate you pick in the launcher (60, 120, 144, 165 Hz and beyond), with no tearing. Each refresh shows the game's newest frame, so motion is smooth: no more half-rate drops, uneven pacing or stutter when the game window has focus. Same on Direct3D 12 and Vulkan.
+- **Works with Adaptive Sync / FreeSync.** With Adaptive Sync on, frames are handed to the display on an even clock, so the monitor refreshes exactly once per frame instead of holding frames for 2 or 3 refreshes.
+- **The in-game FPS counter shows what you see.** With VSync on, it counts the frames that actually reach the screen, the same number AMD, NVIDIA and other overlays show.
+- **VSync off = no frame limit.** With VSync on, the game is capped at twice the refresh rate so a fresh frame is always ready without wasting power.
+- **The launcher's refresh rate change now sticks.** The chosen refresh rate is applied so Windows keeps it while the game is in front, and the refresh rate saved in Windows is restored when the game closes.
+
+### Fixed
+- **Graphical garbage on some court floors** (seen on slower graphics cards). The floor data the game reads back from the graphics card is always read for the current frame again.
+- **Smoother render-to-texture images at higher internal resolutions** (for example player portraits drawn by the game): they are averaged instead of keeping one pixel out of each block when copied back at the original resolution.
+- **Intro and cutscene videos** play at the correct speed with clean sound and steady frames, with VSync on or off.
+
+### Notes
+- With VSync on, the game cannot show more frames than it can produce: if a scene runs below your refresh rate, some frames stay on screen for two refreshes. 60 Hz is the safest choice for a perfectly steady match.
+- The 3D portraits of players without a photo (generated World Tour squad players, created players) are drawn by the game at a small size; they look soft when stretched to large resolutions. This is how the game draws them.
+- Installs over v1.2. Saves, game data and launcher settings are kept.
+
 ## v1.2
 
 Menus, cutscenes, goals and replays now run at your refresh rate, Vulkan replays are sharp, Direct3D 12 no longer drops to 1 FPS with VSync on, and updating over an online-patched install removes the online patch.
