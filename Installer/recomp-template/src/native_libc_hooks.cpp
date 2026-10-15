@@ -29,7 +29,11 @@ bool HooksEnabled() {
 }
 
 inline uint8_t* HostAddress(uint8_t* base, uint32_t address) {
+#if defined(_WIN32) || (defined(__APPLE__) && defined(__aarch64__))
   return base + address + (address >= 0xE0000000u ? 0x1000u : 0u);
+#else
+  return base + address;
+#endif
 }
 
 // True when [address, address + size) is ordinary guest RAM that host code may touch directly.
@@ -37,7 +41,9 @@ inline bool PlainRange(uint32_t address, uint32_t size) {
   const uint64_t end = uint64_t(address) + size;
   if (end > 0x100000000ull) return false;
   if (address < 0x80000000u && end > 0x7F000000u) return false;  // MMIO 0x7F000000-0x7FFFFFFF.
+#if defined(_WIN32) || (defined(__APPLE__) && defined(__aarch64__))
   if (address < 0xE0000000u && end > 0xE0000000u) return false;
+#endif
   return true;
 }
 

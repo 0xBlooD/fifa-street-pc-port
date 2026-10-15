@@ -1641,6 +1641,101 @@ index ae72b7a..7181765 100644
    return guest_tick_count;
  }
  
+diff --git a/src/core/dynlib_posix.cpp b/src/core/dynlib_posix.cpp
+index fcfd6c9..53ed92e 100644
+--- a/src/core/dynlib_posix.cpp
++++ b/src/core/dynlib_posix.cpp
+@@ -4,6 +4,8 @@
+ static_assert(REX_PLATFORM_LINUX || REX_PLATFORM_MAC, "This file is POSIX-only");
+ 
+ #include <dlfcn.h>
++#include <rex/filesystem.h>
++#include <vector>
+ 
+ namespace rex::platform {
+ 
+@@ -27,8 +29,36 @@ DynamicLibrary& DynamicLibrary::operator=(DynamicLibrary&& other) noexcept {
+ bool DynamicLibrary::Load(const std::filesystem::path& path, SymbolResolution mode) {
+   Close();
+   int flags = (mode == SymbolResolution::kImmediate) ? RTLD_NOW : RTLD_LAZY;
++
+   handle_ = dlopen(path.c_str(), flags);
+-  return handle_ != nullptr;
++  if (handle_) return true;
++
++  const std::string name = path.filename().string();
++  const auto exe_dir = rex::filesystem::GetExecutableFolder();
++
++#if REX_PLATFORM_MAC
++  const std::string ext = ".dylib";
++#else
++  const std::string ext = ".so";
++#endif
++
++  std::vector<std::filesystem::path> candidates;
++  if (!path.is_absolute()) {
++    candidates.push_back(exe_dir / path);
++    candidates.push_back(exe_dir / (name + ext));
++    candidates.push_back(exe_dir / ("lib" + name + ext));
++    candidates.push_back("lib" + name + ext);
++    candidates.push_back(name + ext);
++  } else {
++    candidates.push_back(path.string() + ext);
++  }
++
++  for (const auto& candidate : candidates) {
++    handle_ = dlopen(candidate.c_str(), flags);
++    if (handle_) return true;
++  }
++
++  return false;
+ }
+ 
+ void DynamicLibrary::Close() {
+diff --git a/src/core/exception_handler_posix.cpp b/src/core/exception_handler_posix.cpp
+index 8b1c76a..1d9b133 100644
+--- a/src/core/exception_handler_posix.cpp
++++ b/src/core/exception_handler_posix.cpp
+@@ -417,6 +417,39 @@ static void ExceptionHandlerCallback(int signal_number, siginfo_t* signal_info,
+       return;
+     }
+   }
++
++  const struct sigaction* prev_handler = nullptr;
++  switch (signal_number) {
++    case SIGILL:
++      prev_handler = &original_sigill_handler_;
++      break;
++    case SIGSEGV:
++      prev_handler = &original_sigsegv_handler_;
++      break;
++#if REX_PLATFORM_MAC
++    case SIGBUS:
++      prev_handler = &original_sigbus_handler_;
++      break;
++#endif
++    default:
++      break;
++  }
++
++  if (prev_handler) {
++    if (prev_handler->sa_flags & SA_SIGINFO) {
++      if (prev_handler->sa_sigaction) {
++        prev_handler->sa_sigaction(signal_number, signal_info, signal_context);
++        return;
++      }
++    } else if (prev_handler->sa_handler == SIG_DFL) {
++      signal(signal_number, SIG_DFL);
++      raise(signal_number);
++      return;
++    } else if (prev_handler->sa_handler != SIG_IGN && prev_handler->sa_handler != nullptr) {
++      prev_handler->sa_handler(signal_number);
++      return;
++    }
++  }
+ }
+ 
+ void ExceptionHandler::Install(Handler fn, void* data) {
 diff --git a/src/core/perf/counter.cpp b/src/core/perf/counter.cpp
 index 536009e..97f15f4 100644
 --- a/src/core/perf/counter.cpp
@@ -7883,10 +7978,10 @@ index bf8252b..8175193 100644
  
 diff --git a/src/ui/game_ui_fonts.cpp b/src/ui/game_ui_fonts.cpp
 new file mode 100644
-index 0000000..e637829
+index 0000000..d424ba3
 --- /dev/null
 +++ b/src/ui/game_ui_fonts.cpp
-@@ -0,0 +1,162 @@
+@@ -0,0 +1,166 @@
 +// Loads the game's own UI fonts (the TrueType files stored in data0.big) so that the overlays
 +// drawn by the runtime use exactly the lettering of the original menus.
 +//
@@ -7925,7 +8020,11 @@ index 0000000..e637829
 +uint16_t Be16(const uint8_t* p) { return uint16_t((p[0] << 8) | p[1]); }
 +
 +bool ReadAt(FILE* file, uint64_t offset, void* out, size_t size) {
++#if defined(_WIN32)
 +  if (_fseeki64(file, static_cast<long long>(offset), SEEK_SET) != 0) return false;
++#else
++  if (fseeko(file, static_cast<off_t>(offset), SEEK_SET) != 0) return false;
++#endif
 +  return std::fread(out, 1, size, file) == size;
 +}
 +
